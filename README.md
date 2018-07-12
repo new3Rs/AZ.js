@@ -10,7 +10,7 @@ AZ.jsには以下の特長があります。
 - APIドキュメントなどコメントが充実しています
 
 ## 遊び方
-https://new3Rs.github.io/AZ.js/index..ja.html をクリックするとアプリが動きます。
+https://new3Rs.github.io/AZ.js/index.ja.html をクリックするとアプリが動きます。
 
 ## APIドキュメント
 https://new3Rs.github.io/AZ.js/docs をクリックしてください。
