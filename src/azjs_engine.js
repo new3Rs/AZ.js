@@ -5,6 +5,7 @@
 /*
  * @author 市川雄二
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
+ * @license MIT
  */
 // メインスレッドで動かす場合、以下のimportを'./neural_network.js'に変えます。
 import { NeuralNetwork } from './neural_network_client.js';

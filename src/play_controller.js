@@ -4,6 +4,7 @@
 /*
  * @author 市川雄二
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
+ * @license MIT
  */
 /* global $ JGO i18n */
 import { i18nSpeak } from './speech.js';

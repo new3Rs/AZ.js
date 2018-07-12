@@ -4,6 +4,7 @@
 /*
  * @author 市川雄二 
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
+ * @license MIT
  */
 
  // 座標変換用定数です。
