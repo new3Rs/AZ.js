@@ -1,0 +1,25 @@
+{
+  "name": "az.js",
+  "version": "1.0.0",
+  "description": "A JavaScript implementation of AlphaGo Zero",
+  "author": "ICHIKAWA, Yuji",
+  "license": "MIT",
+  "dependencies": {
+    "worker-rmi": "^1.0.7"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-import-export": "^1.0.2",
+    "babelify": "^8.0.0",
+    "browserify": "^16.2.2",
+    "http-server": "^0.11.1",
+    "jsdoc": "^3.5.5"
+  },
+  "scripts": {
+    "build": "npm run client-build && npm run worker-build && npm run doc",
+    "client-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/main.js -o docs/js/az.js",
+    "worker-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/worker.js -o docs/js/az-worker.js",
+    "doc": "jsdoc -r src -d docs/docs",
+    "server": "http-server docs -o"
+  }
+}

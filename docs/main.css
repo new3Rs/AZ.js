@@ -1,0 +1,23 @@
+#board {
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -moz-user-select: none;
+}
+#board > canvas {
+    width: 100%;
+}
+#retry {
+    display: none;
+}
+.end #retry {
+    display: inline-block;
+}
+.end #resign, .end #pass {
+    display: none;
+}
+#ai-time, #your-time {
+    display:inline-block;
+    width: 100px;
+    text-align: left;
+}
