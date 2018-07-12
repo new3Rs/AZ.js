@@ -42,6 +42,16 @@ npm run build
 
 不明な点があれば、Issuesでどんどんご質問ください。
 
+## ウェイトファイルの変換
+Leela Zero用ウェイトファイルをWebDNN用に変換すると本アプリで使えるようになります。
+変換するには、leela-zero-tf/convert_webdnn.py を利用してください。
+
+```sh
+cd leela-zero-tf
+pip3 install -r requirements.txt
+python3 convert_webdnn.py <weight_file_name>
+```
+
 ## ライセンス
 基本的にMITライセンスです。各ファイルに記述しています。
 
@@ -50,3 +60,5 @@ npm run build
 ニューラネットワークの評価に[WebDNN](https://mil-tokyo.github.io/webdnn/ja/)を使用しています。関連ファイル(docs/js/webdnn.js*)はjGoBoardのライセンスを参照してください。
 
 石音は[効果音ラボ](https://soundeffect-lab.info/sound/various/various3.html)様のフリー効果音素材を利用しています。関連ファイル(docs/audio/go-piece1.mp3)は効果音ラボ様のライセンスを参照してください。
+
+leela-zero-tf/tfprocess.py, leela-zero-tf/net2net.py はLeela Zeroのコードを修正したものです。ライセンスはLeela Zeroのライセンスを参照してください。
