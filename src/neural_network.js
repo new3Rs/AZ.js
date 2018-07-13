@@ -57,6 +57,7 @@ export class NeuralNetwork {
         };
         setLoadingBar(0);
         this.nn = await WebDNN.load(path, options);
+        setLoadingBar(100); // progressCallbackがコールさえないパターンがあるので完了時にコールします。
     }
 
     /**
