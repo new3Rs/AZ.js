@@ -42,13 +42,13 @@ export class PlayController {
                 this.start = start;
                 if (this.isSelfPlay) {
                     // AIのセルフプレイの時には右の情報(時計、アゲハマ)が黒、左の情報(時計、アゲハマ)が白です。
-                    $(this.board.turn === JGO.BLACK ? '#your-time' : '#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    $(this.board.turn === JGO.BLACK ? '#right-clock' : '#left-clock').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
                 } else {
                     // ユーザーとAIの対戦の時には右の情報(時計、アゲハマ)がユーザー、左の情報(時計、アゲハマ)がAIです。
                     if (this.board.ownColor === this.board.turn) {
-                        $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                        $('#right-clock').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
                     } else {
-                        $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
+                        $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
                     }
                 }
                 if (this.timeLeft[this.board.turn] < 0) {
@@ -67,24 +67,23 @@ export class PlayController {
             this.start = Date.now();
             this.timer = setInterval(() => {
                 const start = Date.now();
-                console.log(this.timeLeft);
                 this.timeLeft[this.board.turn] -= start - this.start;
                 this.start = start;
                 let clock;
                 if (this.isSelfPlay) {
-                    clock = this.board.turn === JGO.BLACK ? '#your-time' : '#ai-time';
+                    clock = this.board.turn === JGO.BLACK ? '#right-clock' : '#left-clock';
                 } else {
-                    clock = this.board.turn === this.board.ownColor ? '#your-time' : '#ai-time';
+                    clock = this.board.turn === this.board.ownColor ? '#right-clock' : '#left-clock';
                 }
                 $(clock).text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
             }, 100);
         }
         if (this.isSelfPlay) {
-            $('#your-time').text(Math.ceil(this.timeLeft[JGO.BLACK] / 1000));
-            $('#ai-time').text(Math.ceil(this.timeLeft[JGO.WHITE] / 1000));
+            $('#right-clock').text(Math.ceil(this.timeLeft[JGO.BLACK] / 1000));
+            $('#left-clock').text(Math.ceil(this.timeLeft[JGO.WHITE] / 1000));
         } else {
-            $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
-            $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
+            $('#right-clock').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
+            $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
         }
     }
 
@@ -150,8 +149,8 @@ export class PlayController {
         if (this.fisherRule) {
             const played = JGO.opponentOf(this.board.turn);
             const $playedTimer = $(this.isSelfPlay ?
-                this.board.turn === JGO.BLACK ? '#your-time' : '#ai-time' :
-                played === this.board.ownColor ? '#your-time' : '#ai-time');
+                this.board.turn === JGO.BLACK ? '#right-clock' : '#left-clock' :
+                played === this.board.ownColor ? '#right-clock' : '#left-clock');
             $playedTimer.text(`${Math.ceil(this.timeLeft[played] / 1000)}+${this.byoyomi}`);
             this.timeLeft[played] += this.byoyomi * 1000;
             setTimeout(() => {
@@ -161,10 +160,10 @@ export class PlayController {
             if (this.isSelfPlay) {
                 const played = JGO.opponentOf(this.board.turn);
                 this.timeLeft[played] = this.engine.byoyomi * 1000;
-                $(played === JGO.BLACK ? '#your-time' : '#ai-time').text(Math.ceil(this.timeLeft[played] / 1000));
+                $(played === JGO.BLACK ? '#right-clock' : '#left-clock').text(Math.ceil(this.timeLeft[played] / 1000));
             } else if (this.board.turn === this.board.ownColor) {
                 this.timeLeft[JGO.opponentOf(this.board.turn)] = this.engine.byoyomi * 1000;
-                $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
+                $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
             }
         }
     }
