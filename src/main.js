@@ -92,8 +92,8 @@ async function startGame(size, engine) {
             board.setKomi(6.5);
         }
     }
-    const controller = new PlayController(engine, board, mainTime, byoyomi, condition.timeRule === 'igo-quest');
     const isSelfPlay = condition.color === 'self-play';
+    const controller = new PlayController(engine, board, mainTime, byoyomi, condition.timeRule === 'igo-quest', isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
     }

@@ -20,11 +20,12 @@ export class PlayController {
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
+     * @param {bool} isSelfPlay 
      */
-    constructor(engine, board, mainTime, byoyomi, fisherRule) {
+    constructor(engine, board, mainTime, byoyomi, fisherRule, isSelfPlay) {
         this.engine = engine;
         this.board = board;
-        this.isSelfPlay = false;
+        this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
         this.isFirstMove = true;
@@ -39,10 +40,16 @@ export class PlayController {
                 const start = Date.now();
                 this.timeLeft[this.board.turn] -= start - this.start;
                 this.start = start;
-                if (this.board.ownColor === this.board.turn) {
-                    $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
+                if (this.isSelfPlay) {
+                    // AIのセルフプレイの時には右の情報(時計、アゲハマ)が黒、左の情報(時計、アゲハマ)が白です。
+                    $(this.board.turn === JGO.BLACK ? '#your-time' : '#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
                 } else {
-                    $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
+                    // ユーザーとAIの対戦の時には右の情報(時計、アゲハマ)がユーザー、左の情報(時計、アゲハマ)がAIです。
+                    if (this.board.ownColor === this.board.turn) {
+                        $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    } else {
+                        $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
+                    }
                 }
                 if (this.timeLeft[this.board.turn] < 0) {
                     clearInterval(this.timer);
@@ -54,23 +61,31 @@ export class PlayController {
         } else {
             this.timeLeft = [
                 0, // dumy
-                this.board.ownColor === JGO.BLACK ? Infinity : this.engine.byoyomi * 1000, // black
-                this.board.ownColor === JGO.BLACK ? this.engine.byoyomi * 1000 : Infinity, // white
+                this.isSelfPlay || this.board.ownColor !== JGO.BLACK ? this.engine.byoyomi * 1000 : Infinity, // black
+                this.isSelfPlay || this.board.ownColor !== JGO.WHITE ? this.engine.byoyomi * 1000 : Infinity, // white
             ];
             this.start = Date.now();
             this.timer = setInterval(() => {
                 const start = Date.now();
+                console.log(this.timeLeft);
                 this.timeLeft[this.board.turn] -= start - this.start;
                 this.start = start;
-                if (this.board.turn == this.board.ownColor) {
-                    $('#your-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                let clock;
+                if (this.isSelfPlay) {
+                    clock = this.board.turn === JGO.BLACK ? '#your-time' : '#ai-time';
                 } else {
-                    $('#ai-time').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    clock = this.board.turn === this.board.ownColor ? '#your-time' : '#ai-time';
                 }
+                $(clock).text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
             }, 100);
         }
-        $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
-        $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
+        if (this.isSelfPlay) {
+            $('#your-time').text(Math.ceil(this.timeLeft[JGO.BLACK] / 1000));
+            $('#ai-time').text(Math.ceil(this.timeLeft[JGO.WHITE] / 1000));
+        } else {
+            $('#your-time').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
+            $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
+        }
     }
 
     clearTimer() {
@@ -134,15 +149,23 @@ export class PlayController {
     updateClock() {
         if (this.fisherRule) {
             const played = JGO.opponentOf(this.board.turn);
-            const $playedTimer = $(played === this.board.ownColor ? '#your-time' : '#ai-time');
+            const $playedTimer = $(this.isSelfPlay ?
+                this.board.turn === JGO.BLACK ? '#your-time' : '#ai-time' :
+                played === this.board.ownColor ? '#your-time' : '#ai-time');
             $playedTimer.text(`${Math.ceil(this.timeLeft[played] / 1000)}+${this.byoyomi}`);
             this.timeLeft[played] += this.byoyomi * 1000;
             setTimeout(() => {
                 $playedTimer.text(Math.ceil(this.timeLeft[played] / 1000));
             }, 2000);
-        } else if (this.board.turn === this.board.ownColor) {
-            this.timeLeft[JGO.opponentOf(this.board.ownColor)] = this.engine.byoyomi * 1000;
-            $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
+        } else {
+            if (this.isSelfPlay) {
+                const played = JGO.opponentOf(this.board.turn);
+                this.timeLeft[played] = this.engine.byoyomi * 1000;
+                $(played === JGO.BLACK ? '#your-time' : '#ai-time').text(Math.ceil(this.timeLeft[played] / 1000));
+            } else if (this.board.turn === this.board.ownColor) {
+                this.timeLeft[JGO.opponentOf(this.board.turn)] = this.engine.byoyomi * 1000;
+                $('#ai-time').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
+            }
         }
     }
 
@@ -172,7 +195,7 @@ export class PlayController {
             this.board.play(new JGO.Coordinate(move[0] - 1, this.board.jboard.height - move[1]), true);
         }
         if (this.fisherRule) {
-            await this.engine.timeSettings(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000, this.byoyomi);
+            await this.engine.timeSettings(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000, this.byoyomi);
         }
     }
 
@@ -206,7 +229,7 @@ export class PlayController {
     }
 
     async pass() {
-        if (this.board.ownColor === this.board.turn) {
+        if (!this.isSelfPlay && this.board.ownColor === this.board.turn) {
             await this.engine.stop();
             this.engine.pass();
             this.board.play(null);

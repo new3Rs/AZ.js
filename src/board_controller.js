@@ -24,7 +24,7 @@ export class BoardController {
      */
     constructor(boardSize, handicap, komi, callback) {
         this.id = 'board';
-        this.ownColor = null; // ownColorはGUIを使用する側
+        this.ownColor = JGO.BLACK; // ownColorはGUIを使用する側
         this.turn = JGO.BLACK;
         this.jrecord = null;
         this.jboard = null;

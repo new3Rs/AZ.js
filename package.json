@@ -13,13 +13,15 @@
     "babelify": "^8.0.0",
     "browserify": "^16.2.2",
     "http-server": "^0.11.1",
-    "jsdoc": "^3.5.5"
+    "jsdoc": "^3.5.5",
+    "mocha": "^5.2.0"
   },
   "scripts": {
     "build": "npm run client-build && npm run worker-build && npm run doc",
     "client-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/main.js -o docs/js/az.js",
     "worker-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/worker.js -o docs/js/az-worker.js",
     "doc": "jsdoc -r src -d docs/docs",
-    "server": "http-server docs -o"
+    "server": "http-server docs -o",
+    "test": "mocha"
   }
 }
