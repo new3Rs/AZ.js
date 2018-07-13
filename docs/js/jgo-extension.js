@@ -3,8 +3,7 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT 
  */
-
-const JGO = window.JGO;
+//const JGO = window.JGO; // モジュールじゃないときには外すこと。FireFoxでエラーになる。
 const FIELD_MAP = {
     'handicap': 'HA',
     'annotator': 'AN',
