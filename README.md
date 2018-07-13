@@ -42,6 +42,33 @@ npm run build
 
 不明な点があれば、Issuesでどんどんご質問ください。
 
+## 自分アプリの公開の仕方
+面白い変更ができたら公開したくなりますよね？
+GitHubなら公開も簡単です。
+
+1. もしまだ持っていなければGitHubアカウントを作ります。
+
+2. このレポジトリをforkします。
+
+3. forkしたレポジトリをcloneします。
+
+4. SettingsでGitHub PagesのSourceを"master branch /docs folder"に設定します。
+
+5. 「開発の仕方」で変更したファイルをcloneしたレポジトリに上書きコピーしてbuildします。
+
+6. 変更をコミットします。
+```sh
+git commit -am "コメント"
+```
+7. forkしたレポジトリに反映させます。
+```sh
+git push
+```
+
+これであなたのアプリが公開されています。
+https://<あなたのGitHubアカウント名>.github.io/AZ.js/index.ja.html
+をアクセスしてみてください。
+
 ## ウェイトファイルの変換
 Leela Zero用ウェイトファイルをWebDNN用に変換すると本アプリで使えるようになります。
 変換するには、leela-zero-tf/convert_webdnn.py を利用してください。
