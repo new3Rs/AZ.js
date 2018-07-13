@@ -33,7 +33,7 @@ npm install
 npm run server
 ```
 
-4. srcフォルダの中のコードを好きに変更してください。変更したらbuildしましょう。
+4. srcフォルダの中のコードを好きに変更してください。変更したらbuildしましょう。
 ```sh
 npm run build
 ```
@@ -82,7 +82,7 @@ python3 convert_webdnn.py <weight_file_name>
 ## ライセンス
 基本的にMITライセンスです。各ファイルに記述しています。
 
-碁盤描画ライブラリに[jGoBoard](http://jgoboard.com/)の変更バージョンを使用しています。関連ファイル(docs/js/jgoboard-latest.js, docs/large/*)はjGoBoardのライセンスを参照してください。
+碁盤描画ライブラリに[jGoBoard](http://jgoboard.com/)の変更バージョンを使用しています。関連ファイル(docs/js/jgoboard-latest.js, docs/large/*)はjGoBoardのライセンスを参照してください。
 
 ニューラネットワークの評価に[WebDNN](https://mil-tokyo.github.io/webdnn/ja/)を使用しています。関連ファイル(docs/js/webdnn.js*)はjGoBoardのライセンスを参照してください。
 
