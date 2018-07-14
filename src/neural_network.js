@@ -42,6 +42,7 @@ export class NeuralNetwork {
     /**
      * ウェイトファイルをダウンロードします。
      * @param {string} path WebDNNデータのURL
+     * @param {Integer} version Leela Zeroのウェイトフォーマット番号
      */
     async load(path, version = 1) {
         this.version = version;
@@ -66,7 +67,6 @@ export class NeuralNetwork {
      * @returns {Array}
      */
     async evaluate(...inputs) {
-        // AlphaGo Zeroではここで入力をランダムに回転/鏡像変換していますが、サボっています。
         const views = this.nn.getInputViews();
         for (let i = 0; i < inputs.length; i++) {
             views[i].set(inputs[i]);

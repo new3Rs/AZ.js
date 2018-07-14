@@ -343,6 +343,28 @@ export class MCTS {
     }
 
     /**
+     * ニューラルネットワークで局面を評価します。
+     * ランダムに局面を対称変換させる機能を持ちます。
+     * @param {Board} b
+     * @param {bool} random
+     * @returns {Float32Array[]}
+     */
+    async evaluate(b, random = true) {
+        const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+        const [prob, value] = await this.nn.evaluate(b.feature(symmetry));
+        if (symmetry) {
+            const p = new Float32Array(prob.length);
+            for (let rv = 0; rv < b.C.BVCNT; rv++) {
+                p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
+            }
+            p[prob.length - 1] = prob[prob.length - 1];
+            return [p, value];
+        } else {
+            return [prob, value];
+        }
+    }
+
+    /**
      * 検索の前処理です。
      * @private
      * @param {Board} b 
@@ -357,7 +379,7 @@ export class MCTS {
                 this.rootId = this.nodeHashes.get(hash);
 
         } else {
-            const [prob] = await this.nn.evaluate(b.feature());
+            const [prob] = await this.evaluate(b);
 
             // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは強化学習は予定していないので記述しません。
 
@@ -374,7 +396,7 @@ export class MCTS {
      * @returns {number} parentNodeの手番から見たedge局面のバリュー
      */
     async evaluateEdge(b, edgeIndex, parentNode) {
-        let [prob, value] = await this.nn.evaluate(b.feature());
+        let [prob, value] = await this.evaluate(b);
         this.evalCount += 1;
         value = -value[0]; // parentNodeの手番から見たバリューに変換します。
         parentNode.values[edgeIndex] = value;

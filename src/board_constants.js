@@ -47,6 +47,8 @@ export class BoardConstants {
         this.PASS = this.EBVCNT;
         this.VNULL = this.EBVCNT + 1;
         this.BVCNT = this.BSIZE * this.BSIZE;
+        this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
+        this.initializeSymmetricRawVertex();
         Object.freeze(this);
     }
 
@@ -157,5 +159,56 @@ export class BoardConstants {
             v - this.EBSIZE - 1,
             v - this.EBSIZE + 1,
         ]
-    }  
+    }
+
+    initializeSymmetricRawVertex() {
+        for (let sym = 0; sym < 8; sym++) {
+            for (let rv = 0; rv < this.BVCNT; rv++) {
+                this.symmetricRawVertex[rv * 8 + sym] = this.calcSymmetricRawVertex(rv, sym);
+            }
+        }
+    }
+
+    /**
+     * 線形座標の対称変換を返します。
+     * @param {Uint16} rv 線形座標
+     * @param {Integer} symmetry 対称番号
+     * @return {Uint16}
+     */
+    getSymmetricRawVertex(rv, symmetry) {
+        return this.symmetricRawVertex[rv * 8 + symmetry];
+    }
+
+    /**
+     * 線形座標の対称変換を計算して返します。
+     * @param {Uint16} rv 線形座標
+     * @param {Integer} symmetry 対称番号
+     */
+    calcSymmetricRawVertex(rv, symmetry) {
+        const center = (this.BSIZE - 1) / 2;
+        let x = rv % this.BSIZE - center;
+        let y = Math.floor(rv / this.BSIZE) - center;
+        if (symmetry >= 4) { // 鏡像変換
+            x = -x;                        
+        }
+        let tmp;
+        // 回転
+        switch (symmetry % 4) {
+            case 1:
+            tmp = y;
+            y = x;
+            x = -tmp;
+            break;
+            case 2:
+            x = -x;
+            y = -y;
+            break;
+            case 3:
+            tmp = y;
+            y = -x;
+            x = tmp;
+            break;
+        }
+        return x + center + (y + center) * this.BSIZE;
+    }
 }

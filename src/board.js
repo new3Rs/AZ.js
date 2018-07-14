@@ -13,6 +13,17 @@ import { StoneGroup } from './stone_group.js';
 
 /// ニューラルネットワークへの入力に関する履歴の深さです。
 const KEEP_PREV_CNT = 7;
+const FEATURE_CNT = KEEP_PREV_CNT * 2 + 4;
+
+/**
+ * ニューラルネットワークの入力のインデックスを計算します。
+ * @param {*} rv 碁盤の交点の線形座標
+ * @param {*} f フィーチャー番号
+ * @param {*} symmetry 対称変換
+ */
+function featureIndex(rv, f) {
+    return rv * FEATURE_CNT + f;
+}
 
 /**
  * 碁盤クラスです。
@@ -396,28 +407,27 @@ export class Board {
 
     /**
      * ニューラルネットワークを使用する際の入力フィーチャーを生成します。
+     * @param {Integer} symmetry
      * @returns {Float32Array}
      */
-    feature() {
-        const FEATURE_CNT = KEEP_PREV_CNT * 2 + 4;
-        const index = (p, f) => p * FEATURE_CNT + f;
+    feature(symmetry) {
         const array = new Float32Array(this.C.BVCNT * FEATURE_CNT);
         const my = this.turn;
         const opp = this.C.opponentOf(this.turn);
 
         const N = KEEP_PREV_CNT + 1;
         for (let p = 0; p < this.C.BVCNT; p++) {
-            array[index(p, 0)] = this.state[this.C.rv2ev(p)] === my ? 1.0 : 0.0;
+            array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), 0)] = this.state[this.C.rv2ev(p)] === my ? 1.0 : 0.0;
         }
         for (let p = 0; p < this.C.BVCNT; p++) {
-            array[index(p, N)] = this.state[this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
+            array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), N)] = this.state[this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
         }
         for (let i = 0; i < KEEP_PREV_CNT; i++) {
             for (let p = 0; p < this.C.BVCNT; p++) {
-                array[index(p, i + 1)] = this.prevState[i][this.C.rv2ev(p)] === my ? 1.0 : 0.0;
+                array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), i + 1)] = this.prevState[i][this.C.rv2ev(p)] === my ? 1.0 : 0.0;
             }
             for (let p = 0; p < this.C.BVCNT; p++) {
-                array[index(p, N + i + 1)] = this.prevState[i][this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
+                array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), N + i + 1)] = this.prevState[i][this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
             }
         }
         let is_black_turn, is_white_turn;
@@ -429,8 +439,8 @@ export class Board {
             is_white_turn = 1.0;
         }
         for (let p = 0; p < this.C.BVCNT; p++) {
-            array[index(p, FEATURE_CNT - 2)] = is_black_turn;
-            array[index(p, FEATURE_CNT - 1)] = is_white_turn;
+            array[featureIndex(p, FEATURE_CNT - 2)] = is_black_turn;
+            array[featureIndex(p, FEATURE_CNT - 1)] = is_white_turn;
         }
         return array;
     }

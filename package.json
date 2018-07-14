@@ -17,7 +17,7 @@
     "mocha": "^5.2.0"
   },
   "scripts": {
-    "build": "npm run client-build && npm run worker-build && npm run doc",
+    "build": "npm run client-build && npm run worker-build",
     "client-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/main.js -o docs/js/az.js",
     "worker-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/worker.js -o docs/js/az-worker.js",
     "doc": "jsdoc -r src -d docs/docs",

@@ -397,6 +397,187 @@
     
 
     
+    <h4 class="name" id="featureIndex"><span class="type-signature"></span>featureIndex<span class="signature">(rv, f, symmetry)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    ニューラルネットワークの入力のインデックスを計算します。
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>rv</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">碁盤の交点の線形座標</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>f</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">フィーチャー番号</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>symmetry</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">対称変換</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="board.js.html">board.js</a>, <a href="board.js.html#line24">line 24</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="hash"><span class="type-signature"></span>hash<span class="signature">(str)</span><span class="type-signature"> &rarr; {Integer}</span></h4>
     
 
@@ -1833,7 +2014,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="board.js.html">board.js</a>, <a href="board.js.html#line446">line 446</a>
+        <a href="board.js.html">board.js</a>, <a href="board.js.html#line456">line 456</a>
     </li></ul></dd>
     
 
@@ -1863,13 +2044,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Jul 13 2018 13:19:34 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Jul 14 2018 19:27:02 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>
