@@ -352,7 +352,7 @@ export class MCTS {
     async evaluate(b, random = true) {
         const symmetry = random ? Math.floor(Math.random() * 8) : 0;
         const [prob, value] = await this.nn.evaluate(b.feature(symmetry));
-        if (symmetry) {
+        if (symmetry !== 0) {
             const p = new Float32Array(prob.length);
             for (let rv = 0; rv < b.C.BVCNT; rv++) {
                 p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
