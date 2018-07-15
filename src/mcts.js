@@ -520,15 +520,13 @@ export class MCTS {
         };
         const [nextMove, winRate] = await this._search(b, ponder, clean);
 
-        if (!ponder) {
-            console.log(
-                '\nmove number=%d: left time=%s[sec] evaluated=%d',
-                this.rootMoveNumber + 1,
-                Math.max(this.leftTime - time, 0.0).toFixed(1),
-                this.evalCount);
-            this.printInfo(this.rootId, b.C);
-            this.leftTime = this.leftTime - (Date.now() - start) / 1000;
-        }
+        console.log(
+            '\nmove number=%d: left time=%s[sec] evaluated=%d',
+            this.rootMoveNumber + 1,
+            Math.max(this.leftTime - time, 0.0).toFixed(1),
+            this.evalCount);
+        this.printInfo(this.rootId, b.C);
+        this.leftTime = this.leftTime - (Date.now() - start) / 1000;
         return [nextMove, winRate];
     }
 

@@ -213,6 +213,7 @@ export class PlayController {
         } else {
             this.isFirstMove = false;
         }
+        this.coord = coord; // ポンダーと一致するか確認するために直前の座標を保存。
         await this.updateEngine(coord);
         if (this.isSelfPlay || this.board.turn !== this.board.ownColor) {
             setTimeout(async () => {
@@ -223,7 +224,12 @@ export class PlayController {
                 }
             }, 0);
         } else {
-            this.engine.ponder();
+            const [x, y] = await this.engine.ponder();
+            // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
+            if (x === this.coord.i + 1 && y === this.board.jboard.height - this.coord.j) {
+                const $thumbsUp = $('#thumbs-up');
+                $thumbsUp.text(parseInt($thumbsUp.text()) + 1);
+            }
         }
     }
 

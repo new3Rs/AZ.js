@@ -124,7 +124,8 @@ export class AZjsEngine {
      * 相手の考慮中に探索を継続します。
      */
     async ponder() {
-        return await this.mcts.search(this.b, Infinity, true, false);
+        const [move] = await this.mcts.search(this.b, Infinity, true, false);
+        return move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move);
     }
 
     /**
