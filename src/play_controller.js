@@ -16,15 +16,15 @@ import { i18nSpeak } from './speech.js';
 export class PlayController {
     /**
      * @param {AZjsEngine} engine 
-     * @param {BoardController} board 
+     * @param {BoardController} controller 
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, board, mainTime, byoyomi, fisherRule, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, isSelfPlay) {
         this.engine = engine;
-        this.board = board;
+        this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
@@ -38,20 +38,20 @@ export class PlayController {
             this.start = Date.now();
             this.timer = setInterval(() => {
                 const start = Date.now();
-                this.timeLeft[this.board.turn] -= start - this.start;
+                this.timeLeft[this.controller.turn] -= start - this.start;
                 this.start = start;
                 if (this.isSelfPlay) {
                     // AIのセルフプレイの時には右の情報(時計、アゲハマ)が黒、左の情報(時計、アゲハマ)が白です。
-                    $(this.board.turn === JGO.BLACK ? '#right-clock' : '#left-clock').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    $(this.controller.turn === JGO.BLACK ? '#right-clock' : '#left-clock').text(Math.ceil(this.timeLeft[this.controller.turn] / 1000));
                 } else {
                     // ユーザーとAIの対戦の時には右の情報(時計、アゲハマ)がユーザー、左の情報(時計、アゲハマ)がAIです。
-                    if (this.board.ownColor === this.board.turn) {
-                        $('#right-clock').text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                    if (this.controller.ownColor === this.controller.turn) {
+                        $('#right-clock').text(Math.ceil(this.timeLeft[this.controller.turn] / 1000));
                     } else {
-                        $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
+                        $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.controller.turn)] / 1000));
                     }
                 }
-                if (this.timeLeft[this.board.turn] < 0) {
+                if (this.timeLeft[this.controller.turn] < 0) {
                     clearInterval(this.timer);
                     this.timer = null;
                     this.engine.stop();
@@ -61,29 +61,29 @@ export class PlayController {
         } else {
             this.timeLeft = [
                 0, // dumy
-                this.isSelfPlay || this.board.ownColor !== JGO.BLACK ? this.engine.byoyomi * 1000 : Infinity, // black
-                this.isSelfPlay || this.board.ownColor !== JGO.WHITE ? this.engine.byoyomi * 1000 : Infinity, // white
+                this.isSelfPlay || this.controller.ownColor !== JGO.BLACK ? this.engine.byoyomi * 1000 : Infinity, // black
+                this.isSelfPlay || this.controller.ownColor !== JGO.WHITE ? this.engine.byoyomi * 1000 : Infinity, // white
             ];
             this.start = Date.now();
             this.timer = setInterval(() => {
                 const start = Date.now();
-                this.timeLeft[this.board.turn] -= start - this.start;
+                this.timeLeft[this.controller.turn] -= start - this.start;
                 this.start = start;
                 let clock;
                 if (this.isSelfPlay) {
-                    clock = this.board.turn === JGO.BLACK ? '#right-clock' : '#left-clock';
+                    clock = this.controller.turn === JGO.BLACK ? '#right-clock' : '#left-clock';
                 } else {
-                    clock = this.board.turn === this.board.ownColor ? '#right-clock' : '#left-clock';
+                    clock = this.controller.turn === this.controller.ownColor ? '#right-clock' : '#left-clock';
                 }
-                $(clock).text(Math.ceil(this.timeLeft[this.board.turn] / 1000));
+                $(clock).text(Math.ceil(this.timeLeft[this.controller.turn] / 1000));
             }, 100);
         }
         if (this.isSelfPlay) {
             $('#right-clock').text(Math.ceil(this.timeLeft[JGO.BLACK] / 1000));
             $('#left-clock').text(Math.ceil(this.timeLeft[JGO.WHITE] / 1000));
         } else {
-            $('#right-clock').text(Math.ceil(this.timeLeft[this.board.ownColor] / 1000));
-            $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.ownColor)] / 1000));
+            $('#right-clock').text(Math.ceil(this.timeLeft[this.controller.ownColor] / 1000));
+            $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.controller.ownColor)] / 1000));
         }
     }
 
@@ -147,10 +147,10 @@ export class PlayController {
 
     updateClock() {
         if (this.fisherRule) {
-            const played = JGO.opponentOf(this.board.turn);
+            const played = JGO.opponentOf(this.controller.turn);
             const $playedTimer = $(this.isSelfPlay ?
-                this.board.turn === JGO.BLACK ? '#right-clock' : '#left-clock' :
-                played === this.board.ownColor ? '#right-clock' : '#left-clock');
+                this.controller.turn === JGO.BLACK ? '#right-clock' : '#left-clock' :
+                played === this.controller.ownColor ? '#right-clock' : '#left-clock');
             $playedTimer.text(`${Math.ceil(this.timeLeft[played] / 1000)}+${this.byoyomi}`);
             this.timeLeft[played] += this.byoyomi * 1000;
             setTimeout(() => {
@@ -158,12 +158,12 @@ export class PlayController {
             }, 2000);
         } else {
             if (this.isSelfPlay) {
-                const played = JGO.opponentOf(this.board.turn);
+                const played = JGO.opponentOf(this.controller.turn);
                 this.timeLeft[played] = this.engine.byoyomi * 1000;
                 $(played === JGO.BLACK ? '#right-clock' : '#left-clock').text(Math.ceil(this.timeLeft[played] / 1000));
-            } else if (this.board.turn === this.board.ownColor) {
-                this.timeLeft[JGO.opponentOf(this.board.turn)] = this.engine.byoyomi * 1000;
-                $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000));
+            } else if (this.controller.turn === this.controller.ownColor) {
+                this.timeLeft[JGO.opponentOf(this.controller.turn)] = this.engine.byoyomi * 1000;
+                $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.controller.turn)] / 1000));
             }
         }
     }
@@ -171,7 +171,7 @@ export class PlayController {
     async updateEngine(coord) {
         if (!this.isSelfPlay && typeof coord === 'object') {
             await this.engine.stop();
-            await this.engine.play(coord.i + 1, this.board.jboard.height - coord.j);
+            await this.engine.play(coord.i + 1, this.controller.jboard.height - coord.j);
         }
     }
 
@@ -187,14 +187,14 @@ export class PlayController {
             $(document.body).addClass('end');
             break;
             case 'pass':
-            this.board.play(null);
+            this.controller.play(null);
             i18nSpeak(i18n.pass);
             break;
             default:
-            this.board.play(new JGO.Coordinate(move[0] - 1, this.board.jboard.height - move[1]), true);
+            this.controller.play(new JGO.Coordinate(move[0] - 1, this.controller.jboard.height - move[1]), true);
         }
         if (this.fisherRule) {
-            await this.engine.timeSettings(this.timeLeft[JGO.opponentOf(this.board.turn)] / 1000, this.byoyomi);
+            await this.engine.timeSettings(this.timeLeft[JGO.opponentOf(this.controller.turn)] / 1000, this.byoyomi);
         }
     }
 
@@ -215,7 +215,7 @@ export class PlayController {
         }
         this.coord = coord; // ポンダーと一致するか確認するために直前の座標を保存。
         await this.updateEngine(coord);
-        if (this.isSelfPlay || this.board.turn !== this.board.ownColor) {
+        if (this.isSelfPlay || this.controller.turn !== this.controller.ownColor) {
             setTimeout(async () => {
                 try {
                     await this.enginePlay();
@@ -226,7 +226,7 @@ export class PlayController {
         } else {
             const [x, y] = await this.engine.ponder();
             // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
-            if (x === this.coord.i + 1 && y === this.board.jboard.height - this.coord.j) {
+            if (x === this.coord.i + 1 && y === this.controller.jboard.height - this.coord.j) {
                 const $thumbsUp = $('#thumbs-up');
                 $thumbsUp.text(parseInt($thumbsUp.text()) + 1);
             }
@@ -234,10 +234,10 @@ export class PlayController {
     }
 
     async pass() {
-        if (!this.isSelfPlay && this.board.ownColor === this.board.turn) {
+        if (!this.isSelfPlay && this.controller.ownColor === this.controller.turn) {
             await this.engine.stop();
             this.engine.pass();
-            this.board.play(null);
+            this.controller.play(null);
         }
     }
 
@@ -245,10 +245,10 @@ export class PlayController {
         const result = await $.post({
             url: 'https://mimiaka-python.herokuapp.com/gnugo', // httpでは通信できなかった。 'http://35.203.161.100/gnugo',
             data: {
-                sgf: this.board.jrecord.toSgf(),
+                sgf: this.controller.jrecord.toSgf(),
                 move: 'est',
                 method: 'aftermath',
-                rule: this.board.jrecord.getRootNode().info.komi === '6.5' ? 'japanese' : 'chinese'
+                rule: this.controller.jrecord.getRootNode().info.komi === '6.5' ? 'japanese' : 'chinese'
             }
         });
         if (/Jigo/.test(result)) {

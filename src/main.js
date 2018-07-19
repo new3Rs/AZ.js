@@ -21,7 +21,7 @@ import { PlayController } from './play_controller.js';
  * @param {AZjsEngine} engine 
  */
 async function startGame(size, engine) {
-    const board = await new Promise(function(res, rej) {
+    const controller = await new Promise(function(res, rej) {
         new BoardController(size, 0, 7.5, res);
     });
     const $startModal = $('#start-modal');
@@ -82,28 +82,28 @@ async function startGame(size, engine) {
         break;
     }
     if (condition.color === 'W') {
-        board.setOwnColor(JGO.WHITE);
-        if (board.jboard.width === 9) {
-            board.setKomi(5.5);
+        controller.setOwnColor(JGO.WHITE);
+        if (controller.jboard.width === 9) {
+            controller.setKomi(5.5);
         }
     } else if (condition.color === 'B') {
-        board.setOwnColor(JGO.BLACK);
-        if (board.jboard.width === 9) {
-            board.setKomi(6.5);
+        controller.setOwnColor(JGO.BLACK);
+        if (controller.jboard.width === 9) {
+            controller.setKomi(6.5);
         }
     }
     const isSelfPlay = condition.color === 'self-play';
-    const controller = new PlayController(engine, board, mainTime, byoyomi, condition.timeRule === 'igo-quest', isSelfPlay);
+    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
     }
-    controller.setIsSelfPlay(isSelfPlay);
-    board.addObserver(controller);
+    observer.setIsSelfPlay(isSelfPlay);
+    controller.addObserver(observer);
     $('#pass').on('click', function(event) {
-        controller.pass();
+        observer.pass();
     });
     $('#resign').one('click', async function(event) {
-        controller.clearTimer();
+        observer.clearTimer();
         await engine.stop();
         i18nSpeak(i18n.endGreet);
         $(document.body).addClass('end');
@@ -111,7 +111,7 @@ async function startGame(size, engine) {
     $('#retry').one('click', async function(event) {
         $('#pass').off('click');
         $('#resign').off('click');
-        board.destroy();
+        controller.destroy();
         engine.clear();
         $(document.body).removeClass('end');
         setTimeout(async function() {
