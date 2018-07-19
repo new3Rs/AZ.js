@@ -26,9 +26,9 @@ function featureIndex(rv, f) {
 }
 
 /**
- * 碁盤クラスです。
+ * 碁盤の基本クラスです。
  */
-export class Board {
+class BaseBoard {
     /**
      * @param {BoardConstants} constants
      * @param {number} komi 
@@ -406,46 +406,6 @@ export class Board {
     }
 
     /**
-     * ニューラルネットワークを使用する際の入力フィーチャーを生成します。
-     * @param {Integer} symmetry
-     * @returns {Float32Array}
-     */
-    feature(symmetry) {
-        const array = new Float32Array(this.C.BVCNT * FEATURE_CNT);
-        const my = this.turn;
-        const opp = this.C.opponentOf(this.turn);
-
-        const N = KEEP_PREV_CNT + 1;
-        for (let p = 0; p < this.C.BVCNT; p++) {
-            array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), 0)] = this.state[this.C.rv2ev(p)] === my ? 1.0 : 0.0;
-        }
-        for (let p = 0; p < this.C.BVCNT; p++) {
-            array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), N)] = this.state[this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
-        }
-        for (let i = 0; i < KEEP_PREV_CNT; i++) {
-            for (let p = 0; p < this.C.BVCNT; p++) {
-                array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), i + 1)] = this.prevState[i][this.C.rv2ev(p)] === my ? 1.0 : 0.0;
-            }
-            for (let p = 0; p < this.C.BVCNT; p++) {
-                array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), N + i + 1)] = this.prevState[i][this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
-            }
-        }
-        let is_black_turn, is_white_turn;
-        if (my === this.C.BLACK) {
-            is_black_turn = 1.0;
-            is_white_turn = 0.0;
-        } else {
-            is_black_turn = 0.0;
-            is_white_turn = 1.0;
-        }
-        for (let p = 0; p < this.C.BVCNT; p++) {
-            array[featureIndex(p, FEATURE_CNT - 2)] = is_black_turn;
-            array[featureIndex(p, FEATURE_CNT - 1)] = is_white_turn;
-        }
-        return array;
-    }
-
-    /**
      * 現在の局面のハッシュ値を返します。
      * (注)手数情報は含みません。なので比較にはハッシュ値と手数両方を使います。
      */
@@ -490,5 +450,50 @@ export class Board {
             doubleScoreList.push(bCpy.score());
         }
         return mostCommon(doubleScoreList);
+    }
+}
+
+/**
+ * 碁盤クラスです。
+ */
+export class Board extends BaseBoard {
+    /**
+     * ニューラルネットワークを使用する際の入力フィーチャーを生成します。
+     * @param {Integer} symmetry
+     * @returns {Float32Array}
+     */
+    feature(symmetry = 0) {
+        const array = new Float32Array(this.C.BVCNT * FEATURE_CNT);
+        const my = this.turn;
+        const opp = this.C.opponentOf(this.turn);
+
+        const N = KEEP_PREV_CNT + 1;
+        for (let p = 0; p < this.C.BVCNT; p++) {
+            array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), 0)] = this.state[this.C.rv2ev(p)] === my ? 1.0 : 0.0;
+        }
+        for (let p = 0; p < this.C.BVCNT; p++) {
+            array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), N)] = this.state[this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
+        }
+        for (let i = 0; i < KEEP_PREV_CNT; i++) {
+            for (let p = 0; p < this.C.BVCNT; p++) {
+                array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), i + 1)] = this.prevState[i][this.C.rv2ev(p)] === my ? 1.0 : 0.0;
+            }
+            for (let p = 0; p < this.C.BVCNT; p++) {
+                array[featureIndex(this.C.getSymmetricRawVertex(p, symmetry), N + i + 1)] = this.prevState[i][this.C.rv2ev(p)] === opp ? 1.0 : 0.0;
+            }
+        }
+        let is_black_turn, is_white_turn;
+        if (my === this.C.BLACK) {
+            is_black_turn = 1.0;
+            is_white_turn = 0.0;
+        } else {
+            is_black_turn = 0.0;
+            is_white_turn = 1.0;
+        }
+        for (let p = 0; p < this.C.BVCNT; p++) {
+            array[featureIndex(p, FEATURE_CNT - 2)] = is_black_turn;
+            array[featureIndex(p, FEATURE_CNT - 1)] = is_white_turn;
+        }
+        return array;
     }
 }
