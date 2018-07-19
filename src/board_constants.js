@@ -32,7 +32,16 @@ const OFFSET = 'a'.charCodeAt(0) - 1;
  *      6  7  8  9 10 11
  *      0  1  2  3  4  5
  * </pre>
- * 碁盤の交点をxy座標で表すときも左下が原点です。ただしxy座標の場合、1-オリジンです。
+ * 碁盤の交点をxy座標で表すときも左下が原点です。xy座標は盤上左下が(1,1)です。
+ * <pre style="font-family: Courier;">
+ *       ###### #が盤外(実際の値はEXTERIOR)
+ *     4|#....# .は盤上交点(実際の値はEMPTY)
+ *     3|#....#
+ *     2|#....#
+ *     1|#....#
+ *       ######
+ *        1234
+ * </pre>
  */
 export class BoardConstants {
     constructor(size = 19) {
