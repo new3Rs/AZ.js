@@ -64,7 +64,7 @@ export class StoneGroup {
         this.libCnt = this.libs.size;
         this.size += other.size;
         if (this.libCnt === 1) {
-            self.vAtr = this.libs[0];
+            this.vAtr = this.libs[0];
         }
     }
 
