@@ -7,9 +7,7 @@
  * @license MIT
  */
 /* global $ JGO i18n */
-import { resigterWorkerRMI } from 'worker-rmi';
 import { i18nSpeak } from './speech.js';
-import { NeuralNetwork } from './neural_network.js';
 import { AZjsEngine } from './azjs_engine_client.js';
 import { BoardController } from './board_controller.js';
 import { PlayController } from './play_controller.js';
@@ -139,15 +137,8 @@ async function main() {
         default:
         $('#size-19-rule').show();
     }
-    const engine = new AZjsEngine(worker, size);
+    const engine = new AZjsEngine(size);
     await startGame(size, engine);
 }
-
-// 思考エンジンAZjsEngineの本体をウェブワーカーとして動かします。
-const worker = new Worker('js/az-worker.js');
-// ニューラルネットワークをメインスレッドで動かすように登録します。
-// WebGL/WebGPUがメインスレッドのみで動作するからです。
-// 実際の呼び出しは上記ワーカがします。
-resigterWorkerRMI(worker, NeuralNetwork);
 
 main();

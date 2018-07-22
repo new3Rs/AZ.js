@@ -6,7 +6,15 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT
  */
-import { WorkerRMI } from 'worker-rmi';
+import { WorkerRMI, resigterWorkerRMI } from 'worker-rmi';
+import { NeuralNetwork } from './neural_network.js';
+
+// 思考エンジンAZjsEngineの本体をウェブワーカーとして動かします。
+const worker = new Worker('js/az-worker.js');
+// ニューラルネットワークをメインスレッドで動かすように登録します。
+// WebGL/WebGPUがメインスレッドのみで動作するからです。
+// 実際の呼び出しは上記ワーカがします。
+resigterWorkerRMI(worker, NeuralNetwork);
 
 /**
  * 思考エンジンAZjsEngineのRMI版です。ドキュメントは本体側のコードを参照してください。
@@ -14,6 +22,14 @@ import { WorkerRMI } from 'worker-rmi';
  * @see AZjsEngine
  */
 export class AZjsEngine extends WorkerRMI {
+    /**
+     * 碁盤サイズsizeの思考エンジンを返します。
+     * @param {Integer} size 
+     */
+    constructor(size) {
+        super(worker, size);
+    }
+
     /** */
     async loadNN() {
         await this.invokeRM('loadNN');
