@@ -8,18 +8,17 @@
     "worker-rmi": "^1.0.7"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-import-export": "^1.0.2",
-    "babelify": "^8.0.0",
-    "browserify": "^16.2.2",
     "http-server": "^0.11.1",
     "jsdoc": "^3.5.5",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "rollup": "^0.63.4",
+    "rollup-plugin-commonjs": "^9.1.4",
+    "rollup-plugin-node-resolve": "^3.3.0"
   },
   "scripts": {
-    "build": "npm run client-build && npm run worker-build",
-    "client-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/main.js -o docs/js/az.js",
-    "worker-build": "browserify -d -t [ babelify --no-sourceMaps --presets import-export ] src/worker.js -o docs/js/az-worker.js",
+    "build": "npm run main-build && npm run worker-build",
+    "main-build": "rollup --config rollup.config.az.js",
+    "worker-build": "rollup --config rollup.config.az-worker.js",
     "doc": "jsdoc -r src -d docs/docs",
     "server": "http-server docs -o",
     "test": "mocha"
