@@ -16,9 +16,10 @@
     "rollup-plugin-node-resolve": "^3.3.0"
   },
   "scripts": {
-    "build": "npm run main-build && npm run worker-build",
+    "build": "npm run main-build && npm run worker-build && npm run engine-build",
     "main-build": "rollup --config rollup.config.az.js",
     "worker-build": "rollup --config rollup.config.az-worker.js",
+    "engine-build": "rollup --config rollup.config.az-engine.js",
     "doc": "jsdoc -r src -d docs/docs",
     "server": "http-server docs -o",
     "test": "mocha"
