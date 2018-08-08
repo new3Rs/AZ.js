@@ -1852,7 +1852,7 @@
               args = ['https://storage.googleapis.com/mimiaka-storage/LeelaZero9'];
               break;
               case 19:
-              args = ['https://storage.googleapis.com/mimiaka-storage/ELF_OpenGo', 2];
+              args = ['https://storage.googleapis.com/mimiaka-storage/ELF_OpenGo_v1', 2];
               break;
               default:
               throw new Error('size is not supported');
