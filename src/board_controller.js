@@ -8,6 +8,8 @@
  */
 /* global JGO:false, WAudio:false */
 
+import { WAudio } from './waudio.js';
+
 const stoneSound = new WAudio('audio/go-piece1.mp3');
 
 /**

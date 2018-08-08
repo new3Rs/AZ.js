@@ -4,7 +4,7 @@
  * @license MIT
  */
 
-class WAudio {
+export class WAudio {
     static initClass() {
         this.NO_SOURCE = 0;
         this.LOADING = 1;
