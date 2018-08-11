@@ -1284,6 +1284,11 @@ class PlayController {
                     await this.enginePlay();
                 } catch (e) {
                     console.error(e);
+                    if (e === 'RangeError: Source is too large') {
+                        confirm(i18n.sourceIsTooLarge);
+                    } else {
+                        confirm(e);
+                    }
                 }
             }, 0);
         } else {

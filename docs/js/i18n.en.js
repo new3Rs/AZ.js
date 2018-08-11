@@ -12,5 +12,6 @@ window.i18n = {
     notSupport: 'Sorry, this app does not work on your browser. ',
     startGreet: "Let's play!",
     endGreet: 'Thank you',
-    scoring: 'Let me count the score.'
+    scoring: 'Let me count the score.',
+    sourceIsTooLarge: 'Sorry, the data seems too large for your browser.'
 }

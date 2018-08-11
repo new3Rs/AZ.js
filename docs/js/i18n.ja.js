@@ -12,5 +12,6 @@ window.i18n = {
     notSupport: '残念ながらお使いのブラウザでは動きません',
     startGreet: 'お願いします',
     endGreet: 'ありがとうございました',
-    scoring: '整地してみましょう'
+    scoring: '整地してみましょう',
+    sourceIsTooLarge: 'データがお使いのブラウザには大きすぎるようです。すみません'
 }
