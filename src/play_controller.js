@@ -20,14 +20,16 @@ export class PlayController {
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
+     * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, ponder, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
+        this.ponder = ponder && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
             this.timeLeft = [
@@ -228,7 +230,7 @@ export class PlayController {
                     }
                 }
             }, 0);
-        } else {
+        } else if (this.ponder) {
             const [x, y] = await this.engine.ponder();
             // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
             if (x === this.coord.i + 1 && y === this.controller.jboard.height - this.coord.j) {

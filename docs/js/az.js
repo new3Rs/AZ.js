@@ -1083,14 +1083,16 @@ class PlayController {
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
+     * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, ponder, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
+        this.ponder = ponder && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
             this.timeLeft = [
@@ -1291,7 +1293,7 @@ class PlayController {
                     }
                 }
             }, 0);
-        } else {
+        } else if (this.ponder) {
             const [x, y] = await this.engine.ponder();
             // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
             if (x === this.coord.i + 1 && y === this.controller.jboard.height - this.coord.j) {
@@ -1378,6 +1380,7 @@ async function startGame(size, engine) {
                     color: $conditionForm[0]['color'].value,
                     timeRule: $conditionForm[0]['time'].value,
                     time: parseInt($conditionForm[0]['ai-byoyomi'].value),
+                    ponder: $conditionForm[0]['ponder'].value === 'true'
                 });
             });
             $startModal.modal('hide');
@@ -1419,7 +1422,7 @@ async function startGame(size, engine) {
         }
     }
     const isSelfPlay = condition.color === 'self-play';
-    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', isSelfPlay);
+    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.ponder, isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
     }
