@@ -1886,7 +1886,7 @@
        */
       async genmove() {
           const [move, winRate] = await this.search();
-          if (winRate < 0.05) {
+          if (winRate < 0.01) {
               return 'resign';
           } else if (move === this.b.C.PASS || this.b.state[move] === this.b.C.EMPTY) {
               this.b.play(move, true);
