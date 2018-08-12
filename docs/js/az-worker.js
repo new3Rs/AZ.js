@@ -1663,10 +1663,32 @@
                   this.rootId = this.nodeHashes.get(hash$$1);
 
           } else {
-              const [prob] = await this.evaluate(b);
-
-              // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは強化学習は予定していないので記述しません。
-
+              // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは布石を多様化するために独自ノイズを入れます。
+              let prob;
+              if (b.moveNumber === 0) {
+                  switch (b.C.BSIZE) {
+                      case 19:
+                      const firstMoves = [
+                          [16, 16],
+                          [17, 16],
+                          [15, 17],
+                          [15, 16],
+                          [10, 10]
+                      ];
+                      prob = new Float32Array(b.C.BVCNT);
+                      for (let i = 0; i < prob.length; i++) {
+                          const xy = b.C.ev2xy(b.C.rv2ev(i));
+                          prob[i] = firstMoves.find(e => e[0] === xy[0] && e[1] === xy[1]) != null ? 1.0 / firstMoves.length : 0.0;
+                      }
+                      break;
+                      default:
+                      const [p] = await this.evaluate(b);
+                      prob = p;
+                  }
+              } else {
+                  const [p] = await this.evaluate(b);
+                  prob = p;
+              }
               this.rootId = this.createNode(b, prob);
           }
       }
