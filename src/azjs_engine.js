@@ -22,10 +22,10 @@ export class AZjsEngine {
      * @param {Integer} size 碁盤サイズ
      * @param {number} komi コミ
      */
-    constructor(size = 19, komi = 7) {
+    constructor(size = 19, komi = 7, getRootPolicy = null) {
         this.b = new Board(new BoardConstants(size), komi);
         this.nn = new NeuralNetwork(self);
-        this.mcts = new MCTS(this.nn, this.b.C);
+        this.mcts = new MCTS(this.nn, this.b.C, getRootPolicy);
     }
 
     /**

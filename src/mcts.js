@@ -101,7 +101,7 @@ export class MCTS {
      * @param {NeuralNetwork} nn 
      * @param {BoardConstants} C
      */
-    constructor(nn, C) {
+    constructor(nn, C, getRootPolicy = null) {
         this.C_PUCT = 0.01;
         this.mainTime = 0.0;
         this.byoyomi = 1.0;
@@ -117,6 +117,9 @@ export class MCTS {
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
+        if (getRootPolicy instanceof Function) {
+            this.getRootPolicy = getRootPolicy;
+        }
     }
 
     /**
@@ -365,6 +368,18 @@ export class MCTS {
     }
 
     /**
+     * プラガブル処理のデフォルトです。
+     * アプリ固有の処理にしたい場合、コンストラクタでgetRootPolicyに関数を渡してください。
+     * @private
+     * @param {Board} b 
+     * @returns {Float32Array} ポリシーネットワークの出力
+     */
+    async getRootPolicy(b) {
+        const [prob] = await this.evaluate(b);
+        return prob;
+    }
+
+    /**
      * 検索の前処理です。
      * @private
      * @param {Board} b 
@@ -380,32 +395,7 @@ export class MCTS {
 
         } else {
             // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは布石を多様化するために独自ノイズを入れます。
-            let prob;
-            if (b.moveNumber === 0) {
-                switch (b.C.BSIZE) {
-                    case 19:
-                    const firstMoves = [
-                        [16, 16],
-                        [17, 16],
-                        [15, 17],
-                        [15, 16],
-                        [10, 10]
-                    ];
-                    const firstMove = firstMoves[Math.floor(Math.random() * firstMoves.length)];
-                    prob = new Float32Array(b.C.BVCNT);
-                    for (let i = 0; i < prob.length; i++) {
-                        const xy = b.C.ev2xy(b.C.rv2ev(i));
-                        prob[i] = firstMove[0] === xy[0] && firstMove[1] === xy[1] ? 1.0 : 0.0;
-                    }
-                    break;
-                    default:
-                    const [p] = await this.evaluate(b);
-                    prob = p;
-                }
-            } else {
-                const [p] = await this.evaluate(b);
-                prob = p;
-            }
+            const prob = await this.getRootPolicy(b);
             this.rootId = this.createNode(b, prob);
         }
     }
