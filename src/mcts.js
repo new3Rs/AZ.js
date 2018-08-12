@@ -391,10 +391,11 @@ export class MCTS {
                         [15, 16],
                         [10, 10]
                     ];
+                    const firstMove = firstMoves[Math.floor(Math.random() * firstMoves.length)];
                     prob = new Float32Array(b.C.BVCNT);
                     for (let i = 0; i < prob.length; i++) {
                         const xy = b.C.ev2xy(b.C.rv2ev(i));
-                        prob[i] = firstMoves.find(e => e[0] === xy[0] && e[1] === xy[1]) != null ? 1.0 / firstMoves.length : 0.0;
+                        prob[i] = firstMove[0] === xy[0] && firstMove[1] === xy[1] ? 1.0 : 0.0;
                     }
                     break;
                     default:
