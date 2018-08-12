@@ -27,8 +27,12 @@
     text-align: left;
 }
 
-/* bootstrap v4のモーダルはpostion: fixed;なのでスクロールしない。とりあえずモーダルのボディをスクロールさせる */
+/*
+ * bootstrap v4のモーダルはpostion: fixed;なのでスクロールしない。とりあえずモーダルのボディをスクロールさせる
+ * 80pxはアドレスバー、8pxはモーダルのパディング、69pxはモーダルのヘッダ
+ */
 .modal-body {
-    max-height: calc(100vh - 8px * 2 - 69px);
+    max-height: calc(100vh - 80px - 8px * 2 - 69px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
