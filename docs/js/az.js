@@ -1249,6 +1249,9 @@ class PlayController {
             case 'resign':
             this.clearTimer();
             i18nSpeak(i18n.resign);
+            if (this.isSelfPlay) {
+                i18nSpeak(i18n.endGreet);
+            }
             $(document.body).addClass('end');
             break;
             case 'pass':
