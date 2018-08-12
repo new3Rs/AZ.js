@@ -151,7 +151,7 @@ export class PlayController {
         if (this.fisherRule) {
             const played = JGO.opponentOf(this.controller.turn);
             const $playedTimer = $(this.isSelfPlay ?
-                this.controller.turn === JGO.BLACK ? '#right-clock' : '#left-clock' :
+                played === JGO.BLACK ? '#right-clock' : '#left-clock' :
                 played === this.controller.ownColor ? '#right-clock' : '#left-clock');
             $playedTimer.text(`${Math.ceil(this.timeLeft[played] / 1000)}+${this.byoyomi}`);
             this.timeLeft[played] += this.byoyomi * 1000;
