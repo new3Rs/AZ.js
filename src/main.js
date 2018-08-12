@@ -93,6 +93,12 @@ async function startGame(size, engine) {
         }
     }
     const isSelfPlay = condition.color === 'self-play';
+    const $thumbsUp = $('#thumbs-up').parent();
+    if (condition.ponder && !isSelfPlay) {
+        $thumbsUp.show();
+    } else {
+        $thumbsUp.hide();
+    }
     const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.ponder, isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
