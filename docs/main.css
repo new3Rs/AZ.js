@@ -4,20 +4,31 @@
     -ms-user-select: none;
     -moz-user-select: none;
 }
+
 #board > canvas {
     width: 100%;
 }
+
 #retry {
     display: none;
 }
+
 .end #retry {
     display: inline-block;
 }
+
 .end #resign, .end #pass {
     display: none;
 }
+
 #ai-time, #your-time {
     display:inline-block;
     width: 100px;
     text-align: left;
+}
+
+/* bootstrap v4のモーダルはpostion: fixed;なのでスクロールしない。とりあえずモーダルのボディをスクロールさせる */
+.modal-body {
+    max-height: calc(100vh - 8px * 2 - 69px);
+    overflow-y: auto;
 }
