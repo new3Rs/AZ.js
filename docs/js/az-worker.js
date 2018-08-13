@@ -1369,6 +1369,15 @@
           }
       }
 
+      /**
+       * indexのエッジの勝率を返します。
+       * @param {Integer} index 
+       * @returns {number}
+       */
+      winrate(index) {
+          return this.totalActionValues[index] / Math.max(this.visitCounts[index], 1) / 2.0 + 0.5;
+      }
+
       incrementVisitCount(index) {
           this.visitCounts[index] += 1;
           this.sortedIndices = null;
@@ -1529,7 +1538,7 @@
        */
       shouldSearch(best, second) {
           const node = this.nodes[this.rootId];
-          const winrate = this.winrate(node, best);
+          const winrate = node.winrate(best);
 
           // 訪問回数が足りていないか、際立った手がなくかつはっきり勝ちじゃないとき
           return node.totalCount <= 5000 ||
@@ -1566,16 +1575,6 @@
           return edgeId >= 0 &&
               node.hashes[edgeIndex] === this.nodes[edgeId].hash &&
               this.nodes[edgeId].moveNumber === moveNumber;
-      }
-
-      /**
-       * indexのエッジの勝率を返します。
-       * @param {Node} node 
-       * @param {Integer} index 
-       * @returns {number}
-       */
-      winrate(node, index) {
-          return node.totalActionValues[index] / Math.max(node.visitCounts[index], 1) / 2.0 + 0.5;
       }
 
       /**
@@ -1622,17 +1621,17 @@
           console.log('|move|count  |rate |value|prob | best sequence');
           for (let i = 0; i < Math.min(order.length, 9); i++) {
               const m = order[i];
-              const visitCounts = node.visitCounts[m];
-              if (visitCounts === 0) {
+              const visitCount = node.visitCounts[m];
+              if (visitCount === 0) {
                   break;
               }
 
-              const rate = visitCounts === 0 ? 0.0 : this.winrate(node, m) * 100.0;
+              const rate = visitCount === 0 ? 0.0 : node.winrate(m) * 100.0;
               const value = (node.values[m] / 2.0 + 0.5) * 100.0;
               console.log(
                   '|%s|%s|%s|%s|%s| %s',
                   ('   ' + c.ev2str(node.moves[m])).slice(-4),
-                  (visitCounts + '      ').slice(0, 7),
+                  (visitCount + '      ').slice(0, 7),
                   ('  ' + rate.toFixed(1)).slice(-5),
                   ('  ' + value.toFixed(1)).slice(-5),
                   ('  ' + (node.probabilities[m] * 100.0).toFixed(1)).slice(-5),
@@ -1774,7 +1773,7 @@
        * @returns {Array} [着手(書く朝鮮系座標), 勝率]
        */
       async _search(b, ponder, clean) {
-          // AlphaGo Zeroでは自己対戦の序盤30手まではエッジの総訪問回数から確率分布を算出して乱数で着手を洗濯しますが、本コードでは強化学習は予定していないので最善と判断した着手を返します。
+          // AlphaGo Zeroでは自己対戦の序盤30手まではエッジの総訪問回数から確率分布を算出して乱数で着手を選択しますが、本コードでは強化学習は予定していないので最善と判断した着手を返します。
           let best;
           let second;
           if (ponder || this.shouldSearch(best, second)) {
@@ -1792,16 +1791,15 @@
 
           if (clean && node.moves[best] === b.C.PASS &&
               node.totalActionValues[best] * node.totalActionValues[second] > 0.0) {
-              return [node.moves[second], this.winrate(node, second)];
+              return [node.moves[second], node.winrate(second)];
           } else {
-              return [node.moves[best], this.winrate(node, best)];
+              return [node.moves[best], node.winrate(best)];
           }
       }
 
       /**
        * MCTS探索メソッドです。
-       * _searchメソッドのラッパーメソッドです。
-       * 終了条件を設定し、局面bをtime時間探索し、結果をログ出力して次の一手と勝率を返します。
+       * 局面bをルートノード設定して、終了条件を設定し、time時間探索し、結果をログ出力して次の一手と勝率を返します。
        * @param {Board} b 
        * @param {number} time 探索時間を秒単位で指定します
        * @param {bool} ponder ttrueのときstopメソッドが呼ばれるまで探索を継続します
