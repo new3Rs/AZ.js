@@ -335,7 +335,8 @@ export class MCTS {
         const node = this.nodes[nodeId];
         const order = node.getSortedIndices();
         console.log('|move|count  |rate |value|prob | best sequence');
-        for (let i = 0; i < Math.min(order.length, 9); i++) {
+        const length = Math.min(order.length, 9);
+        for (let i = 0; i < length; i++) {
             const m = order[i];
             const visitCount = node.visitCounts[m];
             if (visitCount === 0) {
