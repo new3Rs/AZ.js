@@ -85,6 +85,7 @@ class Node {
         this.totalCount = 0;
         this.hash = 0;
         this.moveNumber = -1;
+        this.sortedIndices = null;
     }
 
     /**
@@ -112,13 +113,24 @@ class Node {
         }
     }
 
+    incrementVisitCount(index) {
+        this.visitCounts[index] += 1;
+        this.sortedIndices = null;
+    }
+
+    getSortedIndices() {
+        if (this.sortedIndices == null) {
+            this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true);
+        }
+        return this.sortedIndices;
+    }
+
     /**
      * エッジの中のベスト2のインデックスを返します。
      * @returns {Integer[]}
      */
     best2() {
-        const order = argsort(this.visitCounts.slice(0, this.edgeLength), true);
-        return order.slice(0, 2);
+        return this.getSortedIndices().slice(0, 2);
     }
 }
 
@@ -129,7 +141,7 @@ export class MCTS {
      * @param {NeuralNetwork} nn 
      * @param {BoardConstants} C
      */
-    constructor(nn, C) {
+    constructor(nn, C, getRootPolicy = null) {
         this.C_PUCT = 0.01;
         this.mainTime = 0.0;
         this.byoyomi = 1.0;
@@ -145,6 +157,9 @@ export class MCTS {
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
+        if (getRootPolicy instanceof Function) {
+            this.getRootPolicy = getRootPolicy;
+        }
     }
 
     /**
@@ -347,7 +362,7 @@ export class MCTS {
      */
     printInfo(nodeId, c) {
         const node = this.nodes[nodeId];
-        const order = argsort(node.visitCounts.slice(0, node.edgeLength), true);
+        const order = node.getSortedIndices();
         console.log('|move|count  |rate |value|prob | best sequence');
         for (let i = 0; i &lt; Math.min(order.length, 9); i++) {
             const m = order[i];
@@ -393,6 +408,18 @@ export class MCTS {
     }
 
     /**
+     * プラガブル処理のデフォルトです。
+     * アプリ固有の処理にしたい場合、コンストラクタでgetRootPolicyに関数を渡してください。
+     * @private
+     * @param {Board} b 
+     * @returns {Float32Array} ポリシーネットワークの出力
+     */
+    async getRootPolicy(b) {
+        const [prob] = await this.evaluate(b);
+        return prob;
+    }
+
+    /**
      * 検索の前処理です。
      * @private
      * @param {Board} b 
@@ -407,10 +434,8 @@ export class MCTS {
                 this.rootId = this.nodeHashes.get(hash);
 
         } else {
-            const [prob] = await this.evaluate(b);
-
-            // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは強化学習は予定していないので記述しません。
-
+            // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは布石を多様化するために独自ノイズを入れます。
+            const prob = await this.getRootPolicy(b);
             this.rootId = this.createNode(b, prob);
         }
     }
@@ -466,7 +491,7 @@ export class MCTS {
         node.totalValue += value;
         node.totalCount += 1;
         node.totalActionValues[selectedIndex] += value;
-        node.visitCounts[selectedIndex] += 1;
+        node.incrementVisitCount(selectedIndex);
         return value;
     }
 
@@ -575,13 +600,13 @@ export class MCTS {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#getRootPolicy">getRootPolicy</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Aug 11 2018 19:51:17 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Aug 13 2018 11:47:04 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

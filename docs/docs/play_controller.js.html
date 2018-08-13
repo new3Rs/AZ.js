@@ -48,14 +48,16 @@ export class PlayController {
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
+     * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, ponder, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
+        this.ponder = ponder &amp;&amp; !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
             this.timeLeft = [
@@ -177,7 +179,7 @@ export class PlayController {
         if (this.fisherRule) {
             const played = JGO.opponentOf(this.controller.turn);
             const $playedTimer = $(this.isSelfPlay ?
-                this.controller.turn === JGO.BLACK ? '#right-clock' : '#left-clock' :
+                played === JGO.BLACK ? '#right-clock' : '#left-clock' :
                 played === this.controller.ownColor ? '#right-clock' : '#left-clock');
             $playedTimer.text(`${Math.ceil(this.timeLeft[played] / 1000)}+${this.byoyomi}`);
             this.timeLeft[played] += this.byoyomi * 1000;
@@ -212,6 +214,9 @@ export class PlayController {
             case 'resign':
             this.clearTimer();
             i18nSpeak(i18n.resign);
+            if (this.isSelfPlay) {
+                i18nSpeak(i18n.endGreet);
+            }
             $(document.body).addClass('end');
             break;
             case 'pass':
@@ -250,13 +255,13 @@ export class PlayController {
                 } catch (e) {
                     console.error(e);
                     if (e === 'RangeError: Source is too large') {
-                        confirm(i18n.SourceIsTooLarge);
+                        confirm(i18n.sourceIsTooLarge);
                     } else {
                         confirm(e);
                     }
                 }
             }, 0);
-        } else {
+        } else if (this.ponder) {
             const [x, y] = await this.engine.ponder();
             // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
             if (x === this.coord.i + 1 &amp;&amp; y === this.controller.jboard.height - this.coord.j) {
@@ -310,13 +315,13 @@ export class PlayController {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#getRootPolicy">getRootPolicy</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Aug 11 2018 19:51:17 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Aug 13 2018 11:47:04 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

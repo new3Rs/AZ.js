@@ -14,10 +14,11 @@ import { Board } from './board.js';
 import { MCTS } from './mcts.js';
 
 /**
- * 対局を行う思考エンジンクラスです。
+ * 対局を行う思考エンジンの基本クラスです。
  * ウェブワーカで動かすことを前提に、メインスレッドのアプリとNeuralNetworkの2つと通信しながらMCTSを実行します。
+ * AZjsEngineという拡張クラスを作成して使います。
  */
-export class AZjsEngine {
+export class AZjsEngineBase {
     /**
      * @param {Integer} size 碁盤サイズ
      * @param {number} komi コミ

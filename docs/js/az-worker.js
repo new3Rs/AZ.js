@@ -1853,10 +1853,11 @@
    */
 
   /**
-   * 対局を行う思考エンジンクラスです。
+   * 対局を行う思考エンジンの基本クラスです。
    * ウェブワーカで動かすことを前提に、メインスレッドのアプリとNeuralNetworkの2つと通信しながらMCTSを実行します。
+   * AZjsEngineという拡張クラスを作成して使います。
    */
-  class AZjsEngine {
+  class AZjsEngineBase {
       /**
        * @param {Integer} size 碁盤サイズ
        * @param {number} komi コミ
@@ -1984,40 +1985,53 @@
    * @file ウェブワーカのエントリーポイントです。
    */
 
-  class AZjsEngine$1 extends AZjsEngine {
-      constructor(size, komi) {
-          super(size, komi, async function(b) {
-              let prob;
-              if (b.moveNumber === 0) {
-                  switch (b.C.BSIZE) {
-                      case 19:
-                      const firstMoves = [
-                          [16, 16],
-                          [17, 16],
-                          [15, 17],
-                          [15, 16],
-                          [10, 10]
-                      ];
-                      const firstMove = firstMoves[Math.floor(Math.random() * firstMoves.length)];
-                      prob = new Float32Array(b.C.BVCNT);
-                      for (let i = 0; i < prob.length; i++) {
-                          const xy = b.C.ev2xy(b.C.rv2ev(i));
-                          prob[i] = firstMove[0] === xy[0] && firstMove[1] === xy[1] ? 1.0 : 0.0;
-                      }
-                      break;
-                      default:
-                      const [p] = await this.evaluate(b);
-                      prob = p;
-                  }
-              } else {
-                  const [p] = await this.evaluate(b);
-                  prob = p;
+  /**
+   * アプリ特有のgetRootPolicy関数です。
+   * thisはMCTSのインスタンスです。
+   * @param {Board} b 
+   */
+  async function getRootPolicy(b) {
+      let prob;
+      if (b.moveNumber === 0) {
+          switch (b.C.BSIZE) {
+              case 19:
+              const firstMoves = [
+                  [16, 16],
+                  [17, 16],
+                  [15, 17],
+                  [15, 16],
+                  [10, 10]
+              ];
+              const firstMove = firstMoves[Math.floor(Math.random() * firstMoves.length)];
+              prob = new Float32Array(b.C.BVCNT);
+              for (let i = 0; i < prob.length; i++) {
+                  const xy = b.C.ev2xy(b.C.rv2ev(i));
+                  prob[i] = firstMove[0] === xy[0] && firstMove[1] === xy[1] ? 1.0 : 0.0;
               }
-              return prob;
-          });
+              break;
+              default:
+              const [p] = await this.evaluate(b);
+              prob = p;
+          }
+      } else {
+          const [p] = await this.evaluate(b);
+          prob = p;
+      }
+      return prob;
+  }
+
+  /** 対局を行う思考エンジンクラスです。 */
+  class AZjsEngine extends AZjsEngineBase {
+      /**
+       * AZjsEngineBaseにアプリ固有のgetRootPolicy関数を渡します。
+       * @param {Integer} size 
+       * @param {Number} komi 
+       */
+      constructor(size, komi) {
+          super(size, komi, getRootPolicy);
       }
   }
 
-  resigterWorkerRMI_1(self, AZjsEngine$1);
+  resigterWorkerRMI_1(self, AZjsEngine);
 
 }());
