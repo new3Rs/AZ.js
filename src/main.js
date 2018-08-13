@@ -7,7 +7,6 @@
  * @license MIT
  */
 /* global $ JGO i18n */
-import './ios_workaround.js';
 import { i18nSpeak } from './speech.js';
 import { AZjsEngine } from './azjs_engine_client.js';
 import { BoardController } from './board_controller.js';

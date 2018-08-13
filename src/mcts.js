@@ -57,6 +57,7 @@ class Node {
         this.totalCount = 0;
         this.hash = 0;
         this.moveNumber = -1;
+        this.sortedIndices = null;
     }
 
     /**
@@ -84,13 +85,24 @@ class Node {
         }
     }
 
+    incrementVisitCount(index) {
+        this.visitCounts[index] += 1;
+        this.sortedIndices = null;
+    }
+
+    getSortedIndices() {
+        if (this.sortedIndices == null) {
+            this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true);
+        }
+        return this.sortedIndices;
+    }
+
     /**
      * エッジの中のベスト2のインデックスを返します。
      * @returns {Integer[]}
      */
     best2() {
-        const order = argsort(this.visitCounts.slice(0, this.edgeLength), true);
-        return order.slice(0, 2);
+        return this.getSortedIndices().slice(0, 2);
     }
 }
 
@@ -322,7 +334,7 @@ export class MCTS {
      */
     printInfo(nodeId, c) {
         const node = this.nodes[nodeId];
-        const order = argsort(node.visitCounts.slice(0, node.edgeLength), true);
+        const order = node.getSortedIndices();
         console.log('|move|count  |rate |value|prob | best sequence');
         for (let i = 0; i < Math.min(order.length, 9); i++) {
             const m = order[i];
@@ -451,7 +463,7 @@ export class MCTS {
         node.totalValue += value;
         node.totalCount += 1;
         node.totalActionValues[selectedIndex] += value;
-        node.visitCounts[selectedIndex] += 1;
+        node.incrementVisitCount(selectedIndex);
         return value;
     }
 
