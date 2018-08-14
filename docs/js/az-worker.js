@@ -1912,10 +1912,10 @@
       async genmove() {
           const [move, winRate] = await this.search();
           if (winRate < 0.01) {
-              return 'resign';
+              return ['resign', winRate];
           } else if (move === this.b.C.PASS || this.b.state[move] === this.b.C.EMPTY) {
               this.b.play(move, true);
-              return move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move);
+              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
           } else {
               console.log('error');
               console.log('%d(%s) is not empty', move, this.b.C.ev2str(move));

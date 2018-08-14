@@ -1112,10 +1112,32 @@ class PlayController {
         if (this.isSelfPlay) {
             $('#right-clock').text(Math.ceil(this.timeLeft[JGO.BLACK] / 1000));
             $('#left-clock').text(Math.ceil(this.timeLeft[JGO.WHITE] / 1000));
+            $('#left-winrate')
+                .css('color', 'black')
+                .css('background-color', 'white');
+            $('#right-winrate')
+                .css('color', 'white')
+                .css('background-color', 'black');
         } else {
             $('#right-clock').text(Math.ceil(this.timeLeft[this.controller.ownColor] / 1000));
             $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.controller.ownColor)] / 1000));
+            if (this.controller.ownColor === JGO.BLACK) {
+                $('#left-winrate')
+                    .css('color', 'black')
+                    .css('background-color', 'white');
+                $('#right-winrate')
+                    .css('color', 'white')
+                    .css('background-color', 'black');
+            } else {
+                $('#left-winrate')
+                    .css('color', 'white')
+                    .css('background-color', 'black');
+                $('#right-winrate')
+                    .css('color', 'black')
+                    .css('background-color', 'white');
+            }
         }
+        this.updateWinrateBar(0.5);
     }
 
     clearTimer() {
@@ -1206,8 +1228,22 @@ class PlayController {
         }
     }
 
+    updateWinrateBar(leftWinRate) {
+        leftWinRate = leftWinRate * 100;
+        const $leftWinrate = $('#left-winrate');
+        const $rightWinrate = $('#right-winrate');
+        $leftWinrate.css('width', `${leftWinRate}%`);
+        $leftWinrate.text(`${leftWinRate.toFixed(1)}%`);
+        $leftWinrate.attr('aria-valuenow', leftWinRate.toFixed(1));
+        $rightWinrate.css('width', `${100 - leftWinRate}%`);
+        $rightWinrate.text(`${(100 - leftWinRate).toFixed(1)}%`);
+        $rightWinrate.attr('aria-valuenow', (100 - leftWinRate).toFixed(1));
+    }
+
     async enginePlay() {
-        const move = await this.engine.genmove();
+        const [move, winRate] = await this.engine.genmove();
+        this.updateWinrateBar(this.isSelfPlay && this.controller.turn === JGO.BLACK ? 1.0 - winRate : winRate);
+
         if (!this.timer) {
             return; // 時間切れもしくは相手の投了
         }
