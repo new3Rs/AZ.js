@@ -121,8 +121,9 @@ export class MCTS {
      * コンストラクタ
      * @param {NeuralNetwork} nn 
      * @param {BoardConstants} C
+     * @param {Function} evaluatePlugin
      */
-    constructor(nn, C, getRootPolicy = null) {
+    constructor(nn, C, evaluatePlugin = null) {
         this.C_PUCT = 0.01;
         this.mainTime = 0.0;
         this.byoyomi = 1.0;
@@ -138,8 +139,8 @@ export class MCTS {
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
-        if (getRootPolicy instanceof Function) {
-            this.getRootPolicy = getRootPolicy;
+        if (evaluatePlugin instanceof Function) {
+            this.evaluatePlugin = evaluatePlugin;
         }
     }
 
@@ -366,29 +367,19 @@ export class MCTS {
      */
     async evaluate(b, random = true) {
         const symmetry = random ? Math.floor(Math.random() * 8) : 0;
-        const [prob, value] = await this.nn.evaluate(b.feature(symmetry));
+        let [prob, value] = await this.nn.evaluate(b.feature(symmetry));
         if (symmetry !== 0) {
             const p = new Float32Array(prob.length);
             for (let rv = 0; rv < b.C.BVCNT; rv++) {
                 p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
             }
             p[prob.length - 1] = prob[prob.length - 1];
-            return [p, value];
-        } else {
-            return [prob, value];
+            prob = p;
         }
-    }
-
-    /**
-     * プラガブル処理のデフォルトです。
-     * アプリ固有の処理にしたい場合、コンストラクタでgetRootPolicyに関数を渡してください。
-     * @private
-     * @param {Board} b 
-     * @returns {Float32Array} ポリシーネットワークの出力
-     */
-    async getRootPolicy(b) {
-        const [prob] = await this.evaluate(b);
-        return prob;
+        if (this.evaluatePlugin) {
+            prob = this.evaluatePlugin(b, prob);
+        }
+        return [prob, value];
     }
 
     /**
@@ -406,10 +397,10 @@ export class MCTS {
                 this.rootId = this.nodeHashes.get(hash);
 
         } else {
-            // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは布石を多様化するために独自ノイズを入れます。
-            const prob = await this.getRootPolicy(b);
+            const [prob] = await this.evaluate(b);
             this.rootId = this.createNode(b, prob);
         }
+        // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加します。
     }
 
     /**

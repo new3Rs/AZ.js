@@ -1405,8 +1405,9 @@
        * コンストラクタ
        * @param {NeuralNetwork} nn 
        * @param {BoardConstants} C
+       * @param {Function} evaluatePlugin
        */
-      constructor(nn, C, getRootPolicy = null) {
+      constructor(nn, C, evaluatePlugin = null) {
           this.C_PUCT = 0.01;
           this.mainTime = 0.0;
           this.byoyomi = 1.0;
@@ -1422,8 +1423,8 @@
           this.evalCount = 0;
           this.nn = nn;
           this.terminateFlag = false;
-          if (getRootPolicy instanceof Function) {
-              this.getRootPolicy = getRootPolicy;
+          if (evaluatePlugin instanceof Function) {
+              this.evaluatePlugin = evaluatePlugin;
           }
       }
 
@@ -1650,29 +1651,19 @@
        */
       async evaluate(b, random = true) {
           const symmetry = random ? Math.floor(Math.random() * 8) : 0;
-          const [prob, value] = await this.nn.evaluate(b.feature(symmetry));
+          let [prob, value] = await this.nn.evaluate(b.feature(symmetry));
           if (symmetry !== 0) {
               const p = new Float32Array(prob.length);
               for (let rv = 0; rv < b.C.BVCNT; rv++) {
                   p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
               }
               p[prob.length - 1] = prob[prob.length - 1];
-              return [p, value];
-          } else {
-              return [prob, value];
+              prob = p;
           }
-      }
-
-      /**
-       * プラガブル処理のデフォルトです。
-       * アプリ固有の処理にしたい場合、コンストラクタでgetRootPolicyに関数を渡してください。
-       * @private
-       * @param {Board} b 
-       * @returns {Float32Array} ポリシーネットワークの出力
-       */
-      async getRootPolicy(b) {
-          const [prob] = await this.evaluate(b);
-          return prob;
+          if (this.evaluatePlugin) {
+              prob = this.evaluatePlugin(b, prob);
+          }
+          return [prob, value];
       }
 
       /**
@@ -1690,10 +1681,10 @@
                   this.rootId = this.nodeHashes.get(hash$$1);
 
           } else {
-              // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは布石を多様化するために独自ノイズを入れます。
-              const prob = await this.getRootPolicy(b);
+              const [prob] = await this.evaluate(b);
               this.rootId = this.createNode(b, prob);
           }
+          // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加します。
       }
 
       /**
@@ -1985,36 +1976,71 @@
    */
 
   /**
-   * アプリ特有のgetRootPolicy関数です。
+   * アプリ特有のevaluatePlugin関数です。
    * thisはMCTSのインスタンスです。
    * @param {Board} b 
    */
-  async function getRootPolicy(b) {
-      let prob;
-      if (b.moveNumber === 0) {
+  function evaluatePlugin(b, prob) {
+      switch (b.moveNumber) {
+          case 0:
           switch (b.C.BSIZE) {
-              case 19:
-              const firstMoves = [
-                  [16, 16],
-                  [17, 16],
-                  [15, 17],
-                  [15, 16],
-                  [10, 10]
-              ];
-              const firstMove = firstMoves[Math.floor(Math.random() * firstMoves.length)];
-              prob = new Float32Array(b.C.BVCNT);
-              for (let i = 0; i < prob.length; i++) {
-                  const xy = b.C.ev2xy(b.C.rv2ev(i));
-                  prob[i] = firstMove[0] === xy[0] && firstMove[1] === xy[1] ? 1.0 : 0.0;
+              case 19: {
+                  const moves = [
+                      [17, 17],
+                      [16, 16],
+                      [17, 16],
+                      [15, 17],
+                      [15, 16]
+                  ];
+                  const move = moves[Math.floor(Math.random() * moves.length)];
+                  prob = new Float32Array(prob.length);
+                  for (let i = 0; i < prob.length; i++) {
+                      const xy = b.C.ev2xy(b.C.rv2ev(i));
+                      prob[i] = move[0] === xy[0] && move[1] === xy[1] ? 1.0 : 0.0;
+                  }
               }
               break;
-              default:
-              const [p] = await this.evaluate(b);
-              prob = p;
           }
-      } else {
-          const [p] = await this.evaluate(b);
-          prob = p;
+          break;
+          case 1:
+          switch (b.C.BSIZE) {
+              case 19: {
+                  const moves = [
+                      [3, 3],
+                      [4, 4],
+                      [3, 4],
+                      [4, 3],
+                      [3, 5],
+                      [5, 3],
+                      [4, 5],
+                      [5, 4],
+                      [3, 17],
+                      [4, 16],
+                      [3, 16],
+                      [4, 17],
+                      [5, 17],
+                      [3, 15],
+                      [5, 16],
+                      [4, 15],
+                      [17, 3],
+                      [16, 4],
+                      [17, 4],
+                      [16, 3],
+                      [15, 3],
+                      [17, 5],
+                      [15, 4],
+                      [16, 5]
+                  ];
+                  const move = moves[Math.floor(Math.random() * moves.length)];
+                  prob = new Float32Array(prob.length);
+                  for (let i = 0; i < prob.length; i++) {
+                      const xy = b.C.ev2xy(b.C.rv2ev(i));
+                      prob[i] = move[0] === xy[0] && move[1] === xy[1] ? 1.0 : 0.0;
+                  }
+              }
+              break;
+          }
+          break;
       }
       return prob;
   }
@@ -2022,12 +2048,12 @@
   /** 対局を行う思考エンジンクラスです。 */
   class AZjsEngine extends AZjsEngineBase {
       /**
-       * AZjsEngineBaseにアプリ固有のgetRootPolicy関数を渡します。
+       * AZjsEngineBaseにアプリ固有のevaluatePlugin関数を渡します。
        * @param {Integer} size 
        * @param {Number} komi 
        */
       constructor(size, komi) {
-          super(size, komi, getRootPolicy);
+          super(size, komi, evaluatePlugin);
       }
   }
 
