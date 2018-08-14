@@ -1299,9 +1299,10 @@ class PlayController {
                 }
             }, 0);
         } else if (this.ponder) {
-            const [x, y] = await this.engine.ponder();
+            const [move, winrate] = await this.engine.ponder();
+            this.updateWinrateBar(1.0 - winrate);
             // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
-            if (x === this.coord.i + 1 && y === this.controller.jboard.height - this.coord.j) {
+            if (move[0] === this.coord.i + 1 && move[1] === this.controller.jboard.height - this.coord.j) {
                 const $thumbsUp = $('#thumbs-up');
                 $thumbsUp.text(parseInt($thumbsUp.text()) + 1);
             }

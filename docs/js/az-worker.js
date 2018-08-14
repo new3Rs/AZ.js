@@ -1959,8 +1959,8 @@
        * 相手の考慮中に探索を継続します。
        */
       async ponder() {
-          const [move] = await this.mcts.search(this.b, Infinity, true, false);
-          return move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move);
+          const [move, winrate] = await this.mcts.search(this.b, Infinity, true, false);
+          return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winrate];
       }
 
       /**
