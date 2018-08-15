@@ -51,12 +51,13 @@ export class PlayController {
      * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, ponder, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode = 'best', ponder, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
+        this.mode = mode;
         this.ponder = ponder &amp;&amp; !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
@@ -111,10 +112,32 @@ export class PlayController {
         if (this.isSelfPlay) {
             $('#right-clock').text(Math.ceil(this.timeLeft[JGO.BLACK] / 1000));
             $('#left-clock').text(Math.ceil(this.timeLeft[JGO.WHITE] / 1000));
+            $('#left-winrate')
+                .css('color', 'black')
+                .css('background-color', 'white');
+            $('#right-winrate')
+                .css('color', 'white')
+                .css('background-color', 'black');
         } else {
             $('#right-clock').text(Math.ceil(this.timeLeft[this.controller.ownColor] / 1000));
             $('#left-clock').text(Math.ceil(this.timeLeft[JGO.opponentOf(this.controller.ownColor)] / 1000));
+            if (this.controller.ownColor === JGO.BLACK) {
+                $('#left-winrate')
+                    .css('color', 'black')
+                    .css('background-color', 'white');
+                $('#right-winrate')
+                    .css('color', 'white')
+                    .css('background-color', 'black');
+            } else {
+                $('#left-winrate')
+                    .css('color', 'white')
+                    .css('background-color', 'black');
+                $('#right-winrate')
+                    .css('color', 'black')
+                    .css('background-color', 'white');
+            }
         }
+        this.updateWinrateBar(0.5);
     }
 
     clearTimer() {
@@ -205,8 +228,22 @@ export class PlayController {
         }
     }
 
+    updateWinrateBar(leftWinRate) {
+        leftWinRate = leftWinRate * 100;
+        const $leftWinrate = $('#left-winrate');
+        const $rightWinrate = $('#right-winrate');
+        $leftWinrate.css('width', `${leftWinRate}%`);
+        $leftWinrate.text(`${leftWinRate.toFixed(1)}%`);
+        $leftWinrate.attr('aria-valuenow', leftWinRate.toFixed(1));
+        $rightWinrate.css('width', `${100 - leftWinRate}%`);
+        $rightWinrate.text(`${(100 - leftWinRate).toFixed(1)}%`);
+        $rightWinrate.attr('aria-valuenow', (100 - leftWinRate).toFixed(1));
+    }
+
     async enginePlay() {
-        const move = await this.engine.genmove();
+        const [move, winRate] = await this.engine.genmove(this.mode);
+        this.updateWinrateBar(this.isSelfPlay &amp;&amp; this.controller.turn === JGO.BLACK ? 1.0 - winRate : winRate);
+
         if (!this.timer) {
             return; // 時間切れもしくは相手の投了
         }
@@ -262,9 +299,10 @@ export class PlayController {
                 }
             }, 0);
         } else if (this.ponder) {
-            const [x, y] = await this.engine.ponder();
+            const [move, winrate] = await this.engine.ponder();
+            this.updateWinrateBar(1.0 - winrate);
             // ponderが終了するときには次の着手が打たれていて、this.coordに保存されている。
-            if (x === this.coord.i + 1 &amp;&amp; y === this.controller.jboard.height - this.coord.j) {
+            if (move[0] === this.coord.i + 1 &amp;&amp; move[1] === this.controller.jboard.height - this.coord.j) {
                 const $thumbsUp = $('#thumbs-up');
                 $thumbsUp.text(parseInt($thumbsUp.text()) + 1);
             }
@@ -315,13 +353,13 @@ export class PlayController {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#getRootPolicy">getRootPolicy</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Aug 13 2018 11:47:04 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Aug 15 2018 13:51:25 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

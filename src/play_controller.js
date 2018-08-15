@@ -23,12 +23,13 @@ export class PlayController {
      * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, ponder, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode = 'best', ponder, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
+        this.mode = mode;
         this.ponder = ponder && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
@@ -212,7 +213,7 @@ export class PlayController {
     }
 
     async enginePlay() {
-        const [move, winRate] = await this.engine.genmove();
+        const [move, winRate] = await this.engine.genmove(this.mode);
         this.updateWinrateBar(this.isSelfPlay && this.controller.turn === JGO.BLACK ? 1.0 - winRate : winRate);
 
         if (!this.timer) {

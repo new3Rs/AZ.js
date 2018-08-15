@@ -28,7 +28,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>MCTS<span class="signature">(nn, C)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>MCTS<span class="signature">(nn, C, evaluatePlugin)</span><span class="type-signature"></span></h2>
         
             <div class="class-description">モンテカルロツリー探索を実行するクラスです。</div>
         
@@ -45,7 +45,7 @@
     
 
     
-    <h4 class="name" id="MCTS"><span class="type-signature"></span>new MCTS<span class="signature">(nn, C)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="MCTS"><span class="type-signature"></span>new MCTS<span class="signature">(nn, C, evaluatePlugin)</span><span class="type-signature"></span></h4>
     
 
     
@@ -79,6 +79,8 @@
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -104,6 +106,10 @@
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last"></td>
         </tr>
@@ -126,6 +132,39 @@
 
             
 
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>evaluatePlugin</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
             
 
             <td class="description last"></td>
@@ -169,7 +208,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line110">line 110</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line111">line 111</a>
     </li></ul></dd>
     
 
@@ -275,7 +314,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line205">line 205</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line207">line 207</a>
     </li></ul></dd>
     
 
@@ -362,7 +401,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line161">line 161</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line163">line 163</a>
     </li></ul></dd>
     
 
@@ -520,7 +559,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line179">line 179</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line181">line 181</a>
     </li></ul></dd>
     
 
@@ -713,7 +752,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line367">line 367</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line360">line 360</a>
     </li></ul></dd>
     
 
@@ -817,7 +856,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line260">line 260</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line262">line 262</a>
     </li></ul></dd>
     
 
@@ -1020,7 +1059,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line279">line 279</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line281">line 281</a>
     </li></ul></dd>
     
 
@@ -1196,7 +1235,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line335">line 335</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line327">line 327</a>
     </li></ul></dd>
     
 
@@ -1230,7 +1269,7 @@
     
 
     
-    <h4 class="name" id="search"><span class="type-signature">(async) </span>search<span class="signature">(b, time, ponder, clean)</span><span class="type-signature"> &rarr; {Array}</span></h4>
+    <h4 class="name" id="search"><span class="type-signature">(async) </span>search<span class="signature">(b, time, ponder, clean)</span><span class="type-signature"> &rarr; {<a href="Node.html">Node</a>}</span></h4>
     
 
     
@@ -1239,8 +1278,7 @@
 
 <div class="description">
     MCTS探索メソッドです。
-_searchメソッドのラッパーメソッドです。
-終了条件を設定し、局面bをtime時間探索し、結果をログ出力して次の一手と勝率を返します。
+局面bをルートノード設定して、終了条件を設定し、time時間探索し、結果をログ出力して次の一手と勝率を返します。
 </div>
 
 
@@ -1402,7 +1440,7 @@ _searchメソッドのラッパーメソッドです。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line527">line 527</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line477">line 477</a>
     </li></ul></dd>
     
 
@@ -1429,7 +1467,7 @@ _searchメソッドのラッパーメソッドです。
 
         
 <div class="param-desc">
-    [着手(書く朝鮮系座標), 勝率]
+    ルートノード
 </div>
 
 
@@ -1440,7 +1478,7 @@ _searchメソッドのラッパーメソッドです。
     </dt>
     <dd>
         
-<span class="param-type">Array</span>
+<span class="param-type"><a href="Node.html">Node</a></span>
 
 
     </dd>
@@ -1582,7 +1620,7 @@ _searchメソッドのラッパーメソッドです。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line224">line 224</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line226">line 226</a>
     </li></ul></dd>
     
 
@@ -1739,7 +1777,7 @@ _searchメソッドのラッパーメソッドです。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line153">line 153</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line155">line 155</a>
     </li></ul></dd>
     
 
@@ -1898,7 +1936,7 @@ _searchメソッドのラッパーメソッドです。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line143">line 143</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line145">line 145</a>
     </li></ul></dd>
     
 
@@ -2056,7 +2094,7 @@ _searchメソッドのラッパーメソッドです。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line246">line 246</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line248">line 248</a>
     </li></ul></dd>
     
 
@@ -2142,7 +2180,7 @@ _searchメソッドのラッパーメソッドです。
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line561">line 561</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line516">line 516</a>
     </li></ul></dd>
     
 
@@ -2165,182 +2203,6 @@ _searchメソッドのラッパーメソッドです。
 
 
 
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="winrate"><span class="type-signature"></span>winrate<span class="signature">(node, index)</span><span class="type-signature"> &rarr; {number}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    indexのエッジの勝率を返します。
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Node.html">Node</a></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>index</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Integer</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line293">line 293</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">number</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -2362,13 +2224,13 @@ _searchメソッドのラッパーメソッドです。
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#getRootPolicy">getRootPolicy</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Aug 13 2018 11:47:04 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Aug 15 2018 13:51:25 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

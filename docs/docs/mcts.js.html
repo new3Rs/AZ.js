@@ -113,6 +113,15 @@ class Node {
         }
     }
 
+    /**
+     * indexのエッジの勝率を返します。
+     * @param {Integer} index 
+     * @returns {number}
+     */
+    winrate(index) {
+        return this.totalActionValues[index] / Math.max(this.visitCounts[index], 1) / 2.0 + 0.5;
+    }
+
     incrementVisitCount(index) {
         this.visitCounts[index] += 1;
         this.sortedIndices = null;
@@ -124,14 +133,6 @@ class Node {
         }
         return this.sortedIndices;
     }
-
-    /**
-     * エッジの中のベスト2のインデックスを返します。
-     * @returns {Integer[]}
-     */
-    best2() {
-        return this.getSortedIndices().slice(0, 2);
-    }
 }
 
 /** モンテカルロツリー探索を実行するクラスです。 */
@@ -140,8 +141,9 @@ export class MCTS {
      * コンストラクタ
      * @param {NeuralNetwork} nn 
      * @param {BoardConstants} C
+     * @param {Function} evaluatePlugin
      */
-    constructor(nn, C, getRootPolicy = null) {
+    constructor(nn, C, evaluatePlugin = null) {
         this.C_PUCT = 0.01;
         this.mainTime = 0.0;
         this.byoyomi = 1.0;
@@ -157,8 +159,8 @@ export class MCTS {
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
-        if (getRootPolicy instanceof Function) {
-            this.getRootPolicy = getRootPolicy;
+        if (evaluatePlugin instanceof Function) {
+            this.evaluatePlugin = evaluatePlugin;
         }
     }
 
@@ -273,7 +275,7 @@ export class MCTS {
      */
     shouldSearch(best, second) {
         const node = this.nodes[this.rootId];
-        const winrate = this.winrate(node, best);
+        const winrate = node.winrate(best);
 
         // 訪問回数が足りていないか、際立った手がなくかつはっきり勝ちじゃないとき
         return node.totalCount &lt;= 5000 ||
@@ -310,16 +312,6 @@ export class MCTS {
         return edgeId >= 0 &amp;&amp;
             node.hashes[edgeIndex] === this.nodes[edgeId].hash &amp;&amp;
             this.nodes[edgeId].moveNumber === moveNumber;
-    }
-
-    /**
-     * indexのエッジの勝率を返します。
-     * @param {Node} node 
-     * @param {Integer} index 
-     * @returns {number}
-     */
-    winrate(node, index) {
-        return node.totalActionValues[index] / Math.max(node.visitCounts[index], 1) / 2.0 + 0.5;
     }
 
     /**
@@ -364,19 +356,20 @@ export class MCTS {
         const node = this.nodes[nodeId];
         const order = node.getSortedIndices();
         console.log('|move|count  |rate |value|prob | best sequence');
-        for (let i = 0; i &lt; Math.min(order.length, 9); i++) {
+        const length = Math.min(order.length, 9);
+        for (let i = 0; i &lt; length; i++) {
             const m = order[i];
-            const visitCounts = node.visitCounts[m];
-            if (visitCounts === 0) {
+            const visitCount = node.visitCounts[m];
+            if (visitCount === 0) {
                 break;
             }
 
-            const rate = visitCounts === 0 ? 0.0 : this.winrate(node, m) * 100.0;
+            const rate = visitCount === 0 ? 0.0 : node.winrate(m) * 100.0;
             const value = (node.values[m] / 2.0 + 0.5) * 100.0;
             console.log(
                 '|%s|%s|%s|%s|%s| %s',
                 ('   ' + c.ev2str(node.moves[m])).slice(-4),
-                (visitCounts + '      ').slice(0, 7),
+                (visitCount + '      ').slice(0, 7),
                 ('  ' + rate.toFixed(1)).slice(-5),
                 ('  ' + value.toFixed(1)).slice(-5),
                 ('  ' + (node.probabilities[m] * 100.0).toFixed(1)).slice(-5),
@@ -394,29 +387,19 @@ export class MCTS {
      */
     async evaluate(b, random = true) {
         const symmetry = random ? Math.floor(Math.random() * 8) : 0;
-        const [prob, value] = await this.nn.evaluate(b.feature(symmetry));
+        let [prob, value] = await this.nn.evaluate(b.feature(symmetry));
         if (symmetry !== 0) {
             const p = new Float32Array(prob.length);
             for (let rv = 0; rv &lt; b.C.BVCNT; rv++) {
                 p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
             }
             p[prob.length - 1] = prob[prob.length - 1];
-            return [p, value];
-        } else {
-            return [prob, value];
+            prob = p;
         }
-    }
-
-    /**
-     * プラガブル処理のデフォルトです。
-     * アプリ固有の処理にしたい場合、コンストラクタでgetRootPolicyに関数を渡してください。
-     * @private
-     * @param {Board} b 
-     * @returns {Float32Array} ポリシーネットワークの出力
-     */
-    async getRootPolicy(b) {
-        const [prob] = await this.evaluate(b);
-        return prob;
+        if (this.evaluatePlugin) {
+            prob = this.evaluatePlugin(b, prob);
+        }
+        return [prob, value];
     }
 
     /**
@@ -434,10 +417,11 @@ export class MCTS {
                 this.rootId = this.nodeHashes.get(hash);
 
         } else {
-            // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加しますが、本コードでは布石を多様化するために独自ノイズを入れます。
-            const prob = await this.getRootPolicy(b);
+            const [prob] = await this.evaluate(b);
             this.rootId = this.createNode(b, prob);
         }
+        // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加します。
+        return this.nodes[this.rootId];
     }
 
     /**
@@ -510,53 +494,19 @@ export class MCTS {
     }
 
     /**
-     * 探索が必要か判定して必要に応じて検索し、最善と判断した着手と勝率を返します。
-     * @private
-     * @param {Board} b 
-     * @param {bool} ponder trueのときstopメソッドが呼ばれるまで探索を継続します
-     * @param {bool} clean 形勢が変わらない限りパス以外の着手を選びます
-     * @returns {Array} [着手(書く朝鮮系座標), 勝率]
-     */
-    async _search(b, ponder, clean) {
-        // AlphaGo Zeroでは自己対戦の序盤30手まではエッジの総訪問回数から確率分布を算出して乱数で着手を洗濯しますが、本コードでは強化学習は予定していないので最善と判断した着手を返します。
-        let best;
-        let second;
-        if (ponder || this.shouldSearch(best, second)) {
-            await this.keepPlayout(b);
-            const best2 = this.nodes[this.rootId].best2();
-            best = best2[0];
-            second = best2[1];
-        } else {
-            const best2 = this.nodes[this.rootId].best2();
-            best = best2[0];
-            second = best2[1];
-        }
-
-        const node = this.nodes[this.rootId];
-
-        if (clean &amp;&amp; node.moves[best] === b.C.PASS &amp;&amp;
-            node.totalActionValues[best] * node.totalActionValues[second] > 0.0) {
-            return [node.moves[second], this.winrate(node, second)];
-        } else {
-            return [node.moves[best], this.winrate(node, best)];
-        }
-    }
-
-    /**
      * MCTS探索メソッドです。
-     * _searchメソッドのラッパーメソッドです。
-     * 終了条件を設定し、局面bをtime時間探索し、結果をログ出力して次の一手と勝率を返します。
+     * 局面bをルートノード設定して、終了条件を設定し、time時間探索し、結果をログ出力して次の一手と勝率を返します。
      * @param {Board} b 
      * @param {number} time 探索時間を秒単位で指定します
      * @param {bool} ponder ttrueのときstopメソッドが呼ばれるまで探索を継続します
      * @param {bool} clean 形勢が変わらない限りパス以外の着手を選びます
-     * @returns {Array} [着手(書く朝鮮系座標), 勝率]
+     * @returns {Node} ルートノード
      */
-    async search(b, time, ponder, clean) {
+    async search(b, time, ponder) {
         const start = Date.now();
-        await this.prepareRootNode(b);
+        const rootNode = await this.prepareRootNode(b);
 
-        if (this.nodes[this.rootId].edgeLength &lt;= 1) { // 候補手がパスしかなければ
+        if (rootNode.edgeLength &lt;= 1) { // 候補手がパスしかなければ
             console.log('\nmove number=%d:', this.rootMoveNumber + 1);
             this.printInfo(this.rootId, b.C);
             return [b.C.PASS, 0.5];
@@ -571,7 +521,12 @@ export class MCTS {
         } : function() {
             return this.terminateFlag || Date.now() - start > time_;
         };
-        const [nextMove, winRate] = await this._search(b, ponder, clean);
+
+        let [best, second] = rootNode.getSortedIndices();
+        if (ponder || this.shouldSearch(best, second)) {
+            await this.keepPlayout(b);
+            [best, second] = rootNode.getSortedIndices();
+        }
 
         console.log(
             '\nmove number=%d: left time=%s[sec] evaluated=%d',
@@ -580,7 +535,7 @@ export class MCTS {
             this.evalCount);
         this.printInfo(this.rootId, b.C);
         this.leftTime = this.leftTime - (Date.now() - start) / 1000;
-        return [nextMove, winRate];
+        return rootNode;
     }
 
     /**
@@ -600,13 +555,13 @@ export class MCTS {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#getRootPolicy">getRootPolicy</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Aug 13 2018 11:47:04 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Aug 15 2018 13:51:25 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -633,8 +633,8 @@ class AZjsEngine extends WorkerRMI_1 {
         await this.invokeRM('timeSettings', [mainTime, byoyomi]);
     }
 
-    async genmove() {
-        return await this.invokeRM('genmove');
+    async genmove(mode = 'best') {
+        return await this.invokeRM('genmove', [mode]);
     }
 
     async play(x, y) {
@@ -1052,12 +1052,13 @@ class PlayController {
      * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, ponder, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode = 'best', ponder, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
+        this.mode = mode;
         this.ponder = ponder && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
@@ -1241,7 +1242,7 @@ class PlayController {
     }
 
     async enginePlay() {
-        const [move, winRate] = await this.engine.genmove();
+        const [move, winRate] = await this.engine.genmove(this.mode);
         this.updateWinrateBar(this.isSelfPlay && this.controller.turn === JGO.BLACK ? 1.0 - winRate : winRate);
 
         if (!this.timer) {
@@ -1386,6 +1387,7 @@ async function startGame(size, engine) {
                     color: $conditionForm[0]['color'].value,
                     timeRule: $conditionForm[0]['time'].value,
                     time: parseInt($conditionForm[0]['ai-byoyomi'].value),
+                    mode: $conditionForm[0]['mode'].value,
                     ponder: $conditionForm[0]['ponder'].value === 'true'
                 });
             });
@@ -1434,7 +1436,7 @@ async function startGame(size, engine) {
     } else {
         $thumbsUp.hide();
     }
-    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.ponder, isSelfPlay);
+    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.mode, condition.ponder, isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
     }

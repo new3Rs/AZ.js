@@ -53,8 +53,8 @@ export class AZjsEngine extends WorkerRMI {
         await this.invokeRM('timeSettings', [mainTime, byoyomi]);
     }
 
-    async genmove() {
-        return await this.invokeRM('genmove');
+    async genmove(mode = 'best') {
+        return await this.invokeRM('genmove', [mode]);
     }
 
     async play(x, y) {

@@ -50,6 +50,7 @@ async function startGame(size, engine) {
                     color: $conditionForm[0]['color'].value,
                     timeRule: $conditionForm[0]['time'].value,
                     time: parseInt($conditionForm[0]['ai-byoyomi'].value),
+                    mode: $conditionForm[0]['mode'].value,
                     ponder: $conditionForm[0]['ponder'].value === 'true'
                 });
             });
@@ -98,7 +99,7 @@ async function startGame(size, engine) {
     } else {
         $thumbsUp.hide();
     }
-    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.ponder, isSelfPlay);
+    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.mode, condition.ponder, isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
     }
