@@ -467,7 +467,7 @@ export class MCTS {
 
     /**
      * MCTS探索メソッドです。
-     * 局面bをルートノード設定して、終了条件を設定し、time時間探索し、結果をログ出力して次の一手と勝率を返します。
+     * 局面bをルートノード設定して、終了条件を設定し、time時間探索し、結果をログ出力してルートノードを返します。
      * @param {Board} b 
      * @param {number} time 探索時間を秒単位で指定します
      * @param {bool} ponder ttrueのときstopメソッドが呼ばれるまで探索を継続します

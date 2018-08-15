@@ -22,11 +22,12 @@ export class AZjsEngineBase {
     /**
      * @param {Integer} size 碁盤サイズ
      * @param {number} komi コミ
+     * @param {Function} evaluatePlugin
      */
-    constructor(size = 19, komi = 7, getRootPolicy = null) {
+    constructor(size = 19, komi = 7, evaluatePlugin = null) {
         this.b = new Board(new BoardConstants(size), komi);
         this.nn = new NeuralNetwork(self);
-        this.mcts = new MCTS(this.nn, this.b.C, getRootPolicy);
+        this.mcts = new MCTS(this.nn, this.b.C, evaluatePlugin);
     }
 
     /**
@@ -69,8 +70,8 @@ export class AZjsEngineBase {
      * 次の手を返します。状況に応じて投了します。
      * 戻り値[x, y]は左上が1-オリジンの2次元座標です。もしくは'resgin'または'pass'を返します。
      * 内部で保持している局面も進めます。
-     * @param {String} mode 'best' or 'reception' 全力か接待か
-     * @returns {Integer[]|string}
+     * @param {string} mode 'best' or 'reception' 全力か接待か
+     * @returns {Object[]} [(Integer[]|string), Number]
      */
     async genmove(mode = 'best') {
         const [move, winRate] = await this.search(mode);
@@ -105,7 +106,12 @@ export class AZjsEngineBase {
     }
 
     /**
+     * MCTS探索します。
+     * modeに応じて次の一手と勝率を返します。
      * @private
+     * @param {String} mode
+     * @param {bool} ponder
+     * @returns {Object[]} [Integer, Number]
      */
     async search(mode = 'best', ponder = false) {
         const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
@@ -136,6 +142,7 @@ export class AZjsEngineBase {
 
     /**
      * 相手の考慮中に探索を継続します。
+     * @returns {Object[]} [(Integer[]|string), Number]
      */
     async ponder() {
         const [move, winrate] = await this.search('best', true);
