@@ -1766,17 +1766,10 @@
        */
       async _search(b, ponder, clean) {
           // AlphaGo Zeroでは自己対戦の序盤30手まではエッジの総訪問回数から確率分布を算出して乱数で着手を選択しますが、本コードでは強化学習は予定していないので最善と判断した着手を返します。
-          let best;
-          let second;
+          let [best, second] = this.nodes[this.rootId].best2();
           if (ponder || this.shouldSearch(best, second)) {
               await this.keepPlayout(b);
-              const best2 = this.nodes[this.rootId].best2();
-              best = best2[0];
-              second = best2[1];
-          } else {
-              const best2 = this.nodes[this.rootId].best2();
-              best = best2[0];
-              second = best2[1];
+              [best, second] = this.nodes[this.rootId].best2();
           }
 
           const node = this.nodes[this.rootId];
