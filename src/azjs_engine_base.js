@@ -77,14 +77,14 @@ export class AZjsEngineBase {
         const [move, winRate] = await this.search(mode);
         if (winRate < 0.01) {
             return ['resign', winRate];
-        } else if (move === this.b.C.PASS || this.b.state[move] === this.b.C.EMPTY) {
-            this.b.play(move, true);
-            return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
         } else {
-            console.log('error');
-            console.log('%d(%s) is not empty', move, this.b.C.ev2str(move));
-            this.b.showboard();
-            console.log(this.b.candidates());
+            if (this.b.play(move, true)) {
+                return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+            } else {
+                this.b.showboard();
+                console.log(this.b.candidates());
+                throw new Error('illegal move');
+            }
         }
     }
 

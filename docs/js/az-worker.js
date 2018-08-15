@@ -1864,21 +1864,21 @@
        * 次の手を返します。状況に応じて投了します。
        * 戻り値[x, y]は左上が1-オリジンの2次元座標です。もしくは'resgin'または'pass'を返します。
        * 内部で保持している局面も進めます。
-       * @param {String} mode 'best' or 'reception' 全力か接待か
-       * @returns {(Integer[]|string, Number)}
+       * @param {string} mode 'best' or 'reception' 全力か接待か
+       * @returns {Object[]} [(Integer[]|string), Number]
        */
       async genmove(mode = 'best') {
           const [move, winRate] = await this.search(mode);
           if (winRate < 0.01) {
               return ['resign', winRate];
-          } else if (move === this.b.C.PASS || this.b.state[move] === this.b.C.EMPTY) {
-              this.b.play(move, true);
-              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
           } else {
-              console.log('error');
-              console.log('%d(%s) is not empty', move, this.b.C.ev2str(move));
-              this.b.showboard();
-              console.log(this.b.candidates());
+              if (this.b.play(move, true)) {
+                  return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+              } else {
+                  this.b.showboard();
+                  console.log(this.b.candidates());
+                  throw new Error('illegal move');
+              }
           }
       }
 
@@ -1905,7 +1905,7 @@
        * @private
        * @param {String} mode
        * @param {bool} ponder
-       * @returns {(Integer, Number)}
+       * @returns {Object[]} [Integer, Number]
        */
       async search(mode = 'best', ponder = false) {
           const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
@@ -1936,7 +1936,7 @@
 
       /**
        * 相手の考慮中に探索を継続します。
-       * @returns {(Integer[]|string, Number)}
+       * @returns {Object[]} [(Integer[]|string), Number]
        */
       async ponder() {
           const [move, winrate] = await this.search('best', true);
