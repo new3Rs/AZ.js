@@ -106,8 +106,10 @@ export class AZjsEngineBase {
     /**
      * @private
      */
-    async search() {
-        return await this.mcts.search(this.b, 0.0, false, false);
+    async search(ponder = false) {
+        const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
+        const [best] = node.getSortedIndices();
+        return [node.moves[best], node.winrate(best)];
     }
 
     /**
@@ -121,7 +123,7 @@ export class AZjsEngineBase {
      * 相手の考慮中に探索を継続します。
      */
     async ponder() {
-        const [move, winrate] = await this.mcts.search(this.b, Infinity, true, false);
+        const [move, winrate] = await this.search(true);
         return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winrate];
     }
 

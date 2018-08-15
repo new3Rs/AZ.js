@@ -105,14 +105,6 @@ class Node {
         }
         return this.sortedIndices;
     }
-
-    /**
-     * エッジの中のベスト2のインデックスを返します。
-     * @returns {Integer[]}
-     */
-    best2() {
-        return this.getSortedIndices().slice(0, 2);
-    }
 }
 
 /** モンテカルロツリー探索を実行するクラスです。 */
@@ -401,6 +393,7 @@ export class MCTS {
             this.rootId = this.createNode(b, prob);
         }
         // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加します。
+        return this.nodes[this.rootId];
     }
 
     /**
@@ -473,43 +466,19 @@ export class MCTS {
     }
 
     /**
-     * 探索が必要か判定して必要に応じて検索し、最善と判断した着手と勝率を返します。
-     * @private
-     * @param {Board} b 
-     * @param {bool} ponder trueのときstopメソッドが呼ばれるまで探索を継続します
-     * @param {bool} clean 形勢が変わらない限りパス以外の着手を選びます
-     * @returns {Array} [着手(書く朝鮮系座標), 勝率]
-     */
-    async _search(b, ponder, clean) {
-        // AlphaGo Zeroでは自己対戦の序盤30手まではエッジの総訪問回数から確率分布を算出して乱数で着手を選択しますが、本コードでは強化学習は予定していないので最善と判断した着手を返します。
-        const node = this.nodes[this.rootId];
-        let [best, second] = node.best2();
-        if (ponder || this.shouldSearch(best, second)) {
-            await this.keepPlayout(b);
-            [best, second] = node.best2();
-        }
-        if (clean && node.moves[best] === b.C.PASS &&
-            node.totalActionValues[best] * node.totalActionValues[second] > 0.0) {
-            return [node.moves[second], node.winrate(second)];
-        } else {
-            return [node.moves[best], node.winrate(best)];
-        }
-    }
-
-    /**
      * MCTS探索メソッドです。
      * 局面bをルートノード設定して、終了条件を設定し、time時間探索し、結果をログ出力して次の一手と勝率を返します。
      * @param {Board} b 
      * @param {number} time 探索時間を秒単位で指定します
      * @param {bool} ponder ttrueのときstopメソッドが呼ばれるまで探索を継続します
      * @param {bool} clean 形勢が変わらない限りパス以外の着手を選びます
-     * @returns {Array} [着手(書く朝鮮系座標), 勝率]
+     * @returns {Node} ルートノード
      */
-    async search(b, time, ponder, clean) {
+    async search(b, time, ponder) {
         const start = Date.now();
-        await this.prepareRootNode(b);
+        const rootNode = await this.prepareRootNode(b);
 
-        if (this.nodes[this.rootId].edgeLength <= 1) { // 候補手がパスしかなければ
+        if (rootNode.edgeLength <= 1) { // 候補手がパスしかなければ
             console.log('\nmove number=%d:', this.rootMoveNumber + 1);
             this.printInfo(this.rootId, b.C);
             return [b.C.PASS, 0.5];
@@ -524,7 +493,12 @@ export class MCTS {
         } : function() {
             return this.terminateFlag || Date.now() - start > time_;
         };
-        const [nextMove, winRate] = await this._search(b, ponder, clean);
+
+        let [best, second] = rootNode.getSortedIndices();
+        if (ponder || this.shouldSearch(best, second)) {
+            await this.keepPlayout(b);
+            [best, second] = rootNode.getSortedIndices();
+        }
 
         console.log(
             '\nmove number=%d: left time=%s[sec] evaluated=%d',
@@ -533,7 +507,7 @@ export class MCTS {
             this.evalCount);
         this.printInfo(this.rootId, b.C);
         this.leftTime = this.leftTime - (Date.now() - start) / 1000;
-        return [nextMove, winRate];
+        return rootNode;
     }
 
     /**
