@@ -482,14 +482,12 @@ export class MCTS {
      */
     async _search(b, ponder, clean) {
         // AlphaGo Zeroでは自己対戦の序盤30手まではエッジの総訪問回数から確率分布を算出して乱数で着手を選択しますが、本コードでは強化学習は予定していないので最善と判断した着手を返します。
-        let [best, second] = this.nodes[this.rootId].best2();
+        const node = this.nodes[this.rootId];
+        let [best, second] = node.best2();
         if (ponder || this.shouldSearch(best, second)) {
             await this.keepPlayout(b);
-            [best, second] = this.nodes[this.rootId].best2();
+            [best, second] = node.best2();
         }
-
-        const node = this.nodes[this.rootId];
-
         if (clean && node.moves[best] === b.C.PASS &&
             node.totalActionValues[best] * node.totalActionValues[second] > 0.0) {
             return [node.moves[second], node.winrate(second)];
