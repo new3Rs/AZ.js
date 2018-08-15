@@ -32,8 +32,10 @@ async function startGame(size, engine) {
     } catch(e) {
         if (e === 'Error: No backend is available') {
             if (/(Mac OS X 10_13|(iPad|iPhone|iPod); CPU OS 11).*Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+                $('#loading-message').text(i18n.notSupport + i18n.safariWithoutWebgpu);
                 i18nSpeak(i18n.notSupport + i18n.safariWithoutWebgpu);
             } else if (!i18nSpeak(i18n.notSupport)) {
+                $('#loading-message').text(i18n.notSupport);
                 alert(i18n.notSupport);
             }
         } else {
