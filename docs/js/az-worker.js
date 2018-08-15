@@ -1864,10 +1864,10 @@
        * 次の手を返します。状況に応じて投了します。
        * 戻り値[x, y]は左上が1-オリジンの2次元座標です。もしくは'resgin'または'pass'を返します。
        * 内部で保持している局面も進めます。
-       * @param {string} mode 'best' or 'reception' 全力か接待か
+       * @param {string} mode 'hard', 'normal', 'easy'
        * @returns {Object[]} [(Integer[]|string), Number]
        */
-      async genmove(mode = 'best') {
+      async genmove(mode) {
           const [move, winRate] = await this.search(mode);
           if (winRate < 0.01) {
               return ['resign', winRate];
@@ -1907,10 +1907,18 @@
        * @param {bool} ponder
        * @returns {Object[]} [Integer, Number]
        */
-      async search(mode = 'best', ponder = false) {
+      async search(mode, ponder = false) {
           const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
           switch (mode) {
-              case 'reception': {
+              case 'normal': {
+                  const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
+                  const winrates = indices.map(e => [e, node.winrate(e)]);
+                  winrates.sort((a, b) => b[1] - a[1]);
+                  const i = winrates.findIndex(e => e[1] < 0.5);
+                  const e = winrates[i < 0 ? winrates.length - 1 : i === 0 ? 0 : i - 1];
+                  return [node.moves[e[0]], e[1]];
+              }
+              case 'easy': {
                   const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                   const winrates = indices.map(e => [e, node.winrate(e), node.visitCounts[e]]);
                   winrates.sort((a, b) => b[1] - a[1]);
@@ -1918,7 +1926,7 @@
                   if (e == null) {
                       e = winrates[winrates.length - 1];
                   }
-                  return [node.moves[e[0]], node.winrate(e[0])];
+                  return [node.moves[e[0]], e[1]];
               }
               default: {
                   const [best] = node.getSortedIndices();
@@ -1939,7 +1947,7 @@
        * @returns {Object[]} [(Integer[]|string), Number]
        */
       async ponder() {
-          const [move, winrate] = await this.search('best', true);
+          const [move, winrate] = await this.search('hard', true);
           return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winrate];
       }
 

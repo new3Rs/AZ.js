@@ -1049,17 +1049,18 @@ class PlayController {
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
+     * @param {string} mode 'best': 手の選択がbestでかつponder on, 'standard': 手の選択がbestでかつponder off, 'reception': 手の選択が接待でかつponder off
      * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode = 'best', ponder, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
-        this.mode = mode;
-        this.ponder = ponder && !isSelfPlay;
+        this.mode = mode === 'very-hard' ? 'hard' : mode;
+        this.ponder = mode === 'very-hard' && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
             this.timeLeft = [
@@ -1389,8 +1390,7 @@ async function startGame(size, engine) {
                     color: $conditionForm[0]['color'].value,
                     timeRule: $conditionForm[0]['time'].value,
                     time: parseInt($conditionForm[0]['ai-byoyomi'].value),
-                    mode: $conditionForm[0]['mode'].value,
-                    ponder: $conditionForm[0]['ponder'].value === 'true'
+                    mode: $conditionForm[0]['mode'].value
                 });
             });
             $startModal.modal('hide');
@@ -1438,7 +1438,7 @@ async function startGame(size, engine) {
     } else {
         $thumbsUp.hide();
     }
-    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.mode, condition.ponder, isSelfPlay);
+    const observer = new PlayController(engine, controller, mainTime, byoyomi, condition.timeRule === 'igo-quest', condition.mode, isSelfPlay);
     if (!isSelfPlay) {
         i18nSpeak(i18n.startGreet);
     }

@@ -20,17 +20,18 @@ export class PlayController {
      * @param {number} mainTime 
      * @param {number} byoyomi 
      * @param {bool} fisherRule 
+     * @param {string} mode 'best': 手の選択がbestでかつponder on, 'standard': 手の選択がbestでかつponder off, 'reception': 手の選択が接待でかつponder off
      * @param {bool} ponder
      * @param {bool} isSelfPlay 
      */
-    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode = 'best', ponder, isSelfPlay) {
+    constructor(engine, controller, mainTime, byoyomi, fisherRule, mode, isSelfPlay) {
         this.engine = engine;
         this.controller = controller;
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
-        this.mode = mode;
-        this.ponder = ponder && !isSelfPlay;
+        this.mode = mode === 'very-hard' ? 'hard' : mode;
+        this.ponder = mode === 'very-hard' && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
             this.timeLeft = [
