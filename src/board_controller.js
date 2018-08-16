@@ -115,9 +115,9 @@ export class BoardController {
     update(coord) {
         const node = this.jrecord.getCurrentNode();
         document.getElementById('opponent-captures').innerText =
-            node.info.captures[this.ownColor === JGO.BLACK ? JGO.WHITE : JGO.BLACK];
+            node.info.captures[this.ownColor === JGO.WHITE ? JGO.BLACK : JGO.WHITE];
         document.getElementById('own-captures').innerText =
-            node.info.captures[this.ownColor];
+            node.info.captures[this.ownColor || JGO.BLACK];
         setTimeout(() => {
             this.observers.forEach(function(observer) {
                 observer.update(coord);
