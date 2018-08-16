@@ -45,7 +45,7 @@ export class AZjsEngineBase {
             default:
             throw new Error('size is not supported');
         }
-        await this.nn.invokeRM('load', args);
+        await this.nn.load.apply(this.nn, args);
     }
 
     /**

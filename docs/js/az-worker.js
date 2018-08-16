@@ -394,6 +394,10 @@
    * @see NeuralNetwork
    */
   class NeuralNetwork extends WorkerRMI_1 {
+      async load(...inputs) {
+          return await this.invokeRM('load', inputs);
+      }
+
       async evaluate(...inputs) {
           const result = await this.invokeRM('evaluate', inputs);
           return result;
@@ -1839,7 +1843,7 @@
               default:
               throw new Error('size is not supported');
           }
-          await this.nn.invokeRM('load', args);
+          await this.nn.load.apply(this.nn, args);
       }
 
       /**

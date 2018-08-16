@@ -14,6 +14,10 @@ import { WorkerRMI } from 'worker-rmi';
  * @see NeuralNetwork
  */
 export class NeuralNetwork extends WorkerRMI {
+    async load(...inputs) {
+        return await this.invokeRM('load', inputs);
+    }
+
     async evaluate(...inputs) {
         const result = await this.invokeRM('evaluate', inputs);
         return result;
