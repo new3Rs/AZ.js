@@ -1432,6 +1432,9 @@ async function startGame(size, engine) {
         }
     }
     const isSelfPlay = condition.color === 'self-play';
+    if (isSelfPlay) {
+        controller.setOwnColor(null);
+    }
     const $thumbsUp = $('#thumbs-up').parent();
     if (condition.ponder && !isSelfPlay) {
         $thumbsUp.show();
