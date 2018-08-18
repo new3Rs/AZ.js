@@ -78,7 +78,7 @@ export class AZjsEngineBase {
         if (winRate < 0.01) {
             return ['resign', winRate];
         } else {
-            if (this.b.play(move, true)) {
+            if (this.b.play(move)) {
                 return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
             } else {
                 this.b.showboard();
