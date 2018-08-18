@@ -1881,7 +1881,7 @@
               } else {
                   this.b.showboard();
                   console.log(this.b.candidates());
-                  throw new Error('illegal move');
+                  throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
               }
           }
       }
