@@ -231,7 +231,8 @@ class BaseBoard {
     }
 
     /**
-     * 交点vががん形かどうかを返します。
+     * 交点vが眼形かどうかを返します。
+     * (バグ) コウ付きでコウを取れる場合、眼形と判定します。
      * @private
      * @param {Uint16} v 
      * @param {number} pl player color

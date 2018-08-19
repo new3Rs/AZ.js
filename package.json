@@ -8,8 +8,11 @@
     "worker-rmi": "^1.0.7"
   },
   "devDependencies": {
+    "babel-preset-import-export": "^1.0.2",
+    "babel-register": "^6.26.0",
     "http-server": "^0.11.1",
     "jsdoc": "^3.5.5",
+    "jssgf": "^0.3.8",
     "mocha": "^5.2.0",
     "rollup": "^0.63.4",
     "rollup-plugin-commonjs": "^9.1.4",
