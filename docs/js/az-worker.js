@@ -1027,7 +1027,8 @@
       }
 
       /**
-       * 交点vががん形かどうかを返します。
+       * 交点vが眼形かどうかを返します。
+       * (バグ) コウ付きでコウを取れる場合、眼形と判定します。
        * @private
        * @param {Uint16} v 
        * @param {number} pl player color
@@ -1036,9 +1037,10 @@
           if (v === this.C.PASS) {
               return false;
           }
+          const opponent = this.C.opponentOf(pl);
           for (const nv of this.C.neighbors(v)) {
               const c = this.state[nv];
-              if (c === this.C.EMPTY || c === this.C.opponentOf(pl)) {
+              if (c === this.C.EMPTY || c === opponent) {
                   return false;
               }
           }
@@ -1046,10 +1048,10 @@
           for (const nv of this.C.diagonals(v)) {
               diagCnt[this.state[nv]] += 1;
           }
-          const wedgeCnt = diagCnt[this.C.opponentOf(pl)] + (diagCnt[3] > 0 ? 1 : 0);
+          const wedgeCnt = diagCnt[opponent] + (diagCnt[3] > 0 ? 1 : 0);
           if (wedgeCnt === 2) {
               for (const nv of this.C.diagonals(v)) {
-                  if (this.state[nv] === this.C.opponentOf(pl) &&
+                  if (this.state[nv] === opponent &&
                       this.sg[this.id[nv]].getLibCnt() === 1 &&
                       this.sg[this.id[nv]].getVAtr() !== this.ko) {
                           return true;
