@@ -1206,32 +1206,25 @@
       /**
        * 現在の局面のハッシュ値を返します。
        * (注)手数情報は含みません。なので比較にはハッシュ値と手数両方を使います。
+       * @returns {Integer}
        */
       hash() {
           return hash((this.state.toString() + this.prevState[0].toString() + this.turn.toString()).replace(',', ''));
       }
 
       /**
-       * @typedef {Object} Candidates
-       * @property {number} hash 
-       * @property {Integer} moveCnt
-       * @property {Integer[]} list 着手可能な交点線形座標(拡張線形座標ではありません)
        * 着手可能な交点の情報を返します。
-       * @returns {object} { hash: ハッシュ値, moveNumber: 手数, list: 候補手配列 }
+       * @returns {Integer[]} 着手可能な交点線形座標(拡張線形座標ではありません)
        */
       candidates() {
-          const candList = [];
+          const result = [];
           for (let v = 0; v < this.state.length; v++) {
               if (this.legal(v)) {
-                  candList.push(this.C.ev2rv(v));
+                  result.push(this.C.ev2rv(v));
               }
           }
-          candList.push(this.C.ev2rv(this.C.PASS));
-          return {
-              hash: this.hash(),
-              moveNumber: this.moveNumber,
-              list: candList
-          };
+          result.push(this.C.ev2rv(this.C.PASS));
+          return result;
       }
 
       /**
@@ -1352,16 +1345,18 @@
 
       /**
        * 初期化します。
+       * @param {Integer} hash 現局面のハッシュです。
+       * @param {Integer} moveNumber 現局面の手数です。
        * @param {object} candidates Boardが生成する候補手情報です。
        * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
        */
-      initialize(candidates, prob) {
+      initialize(hash$$1, moveNumber, candidates, prob) {
           this.clear();
-          this.moveNumber = candidates.moveNumber;
-          this.hash = candidates.hash;
+          this.hash = hash$$1;
+          this.moveNumber = moveNumber;
 
           for (const rv of argsort(prob, true)) {
-              if (candidates.list.includes(rv)) {
+              if (candidates.includes(rv)) {
                   this.moves[this.edgeLength] = this.C.rv2ev(rv);
                   this.probabilities[this.edgeLength] = prob[rv];
                   this.values[this.edgeLength] = 0.0;
@@ -1470,12 +1465,13 @@
        */
       createNode(b, prob) {
           const candidates = b.candidates();
-          const hash$$1 = candidates.hash;
-          if (this.nodeHashes.has(hash$$1) &&
-              this.nodes[this.nodeHashes.get(hash$$1)].hash === hash$$1 &&
-              this.nodes[this.nodeHashes.get(hash$$1)].moveNumber === candidates.moveNumber) {
-                  return this.nodeHashes.get(hash$$1);
-
+          const hash$$1 = b.hash();
+          if (this.nodeHashes.has(hash$$1)) {
+              const id = this.nodeHashes.get(hash$$1);
+              if (this.nodes[id].hash === hash$$1 &&
+                  this.nodes[id].moveNumber === b.moveNumber) {
+                  return id;
+              }
           }
 
           let nodeId = hash$$1 % NODES_MAX_LENGTH;
@@ -1487,7 +1483,7 @@
           this.nodesLength += 1;
 
           const node = this.nodes[nodeId];
-          node.initialize(candidates, prob);
+          node.initialize(hash$$1, b.moveNumber, candidates, prob);
           return nodeId;
       }
 

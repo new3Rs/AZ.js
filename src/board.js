@@ -410,32 +410,25 @@ class BaseBoard {
     /**
      * 現在の局面のハッシュ値を返します。
      * (注)手数情報は含みません。なので比較にはハッシュ値と手数両方を使います。
+     * @returns {Integer}
      */
     hash() {
         return hash((this.state.toString() + this.prevState[0].toString() + this.turn.toString()).replace(',', ''));
     }
 
     /**
-     * @typedef {Object} Candidates
-     * @property {number} hash 
-     * @property {Integer} moveCnt
-     * @property {Integer[]} list 着手可能な交点線形座標(拡張線形座標ではありません)
      * 着手可能な交点の情報を返します。
-     * @returns {object} { hash: ハッシュ値, moveNumber: 手数, list: 候補手配列 }
+     * @returns {Integer[]} 着手可能な交点線形座標(拡張線形座標ではありません)
      */
     candidates() {
-        const candList = [];
+        const result = [];
         for (let v = 0; v < this.state.length; v++) {
             if (this.legal(v)) {
-                candList.push(this.C.ev2rv(v));
+                result.push(this.C.ev2rv(v));
             }
         }
-        candList.push(this.C.ev2rv(this.C.PASS));
-        return {
-            hash: this.hash(),
-            moveNumber: this.moveNumber,
-            list: candList
-        };
+        result.push(this.C.ev2rv(this.C.PASS));
+        return result;
     }
 
     /**

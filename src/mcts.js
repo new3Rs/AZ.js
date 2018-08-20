@@ -62,16 +62,18 @@ class Node {
 
     /**
      * 初期化します。
+     * @param {Integer} hash 現局面のハッシュです。
+     * @param {Integer} moveNumber 現局面の手数です。
      * @param {object} candidates Boardが生成する候補手情報です。
      * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
      */
-    initialize(candidates, prob) {
+    initialize(hash, moveNumber, candidates, prob) {
         this.clear();
-        this.moveNumber = candidates.moveNumber;
-        this.hash = candidates.hash;
+        this.hash = hash;
+        this.moveNumber = moveNumber;
 
         for (const rv of argsort(prob, true)) {
-            if (candidates.list.includes(rv)) {
+            if (candidates.includes(rv)) {
                 this.moves[this.edgeLength] = this.C.rv2ev(rv);
                 this.probabilities[this.edgeLength] = prob[rv];
                 this.values[this.edgeLength] = 0.0;
@@ -180,12 +182,13 @@ export class MCTS {
      */
     createNode(b, prob) {
         const candidates = b.candidates();
-        const hash = candidates.hash;
-        if (this.nodeHashes.has(hash) &&
-            this.nodes[this.nodeHashes.get(hash)].hash === hash &&
-            this.nodes[this.nodeHashes.get(hash)].moveNumber === candidates.moveNumber) {
-                return this.nodeHashes.get(hash);
-
+        const hash = b.hash();
+        if (this.nodeHashes.has(hash)) {
+            const id = this.nodeHashes.get(hash);
+            if (this.nodes[id].hash === hash &&
+                this.nodes[id].moveNumber === b.moveNumber) {
+                return id;
+            }
         }
 
         let nodeId = hash % NODES_MAX_LENGTH;
@@ -197,7 +200,7 @@ export class MCTS {
         this.nodesLength += 1;
 
         const node = this.nodes[nodeId];
-        node.initialize(candidates, prob);
+        node.initialize(hash, b.moveNumber, candidates, prob);
         return nodeId;
     }
 
