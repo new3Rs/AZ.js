@@ -1584,7 +1584,7 @@
        * @param {BoardConstants} c 
        */
       bestSequence(nodeId, headMove, c) {
-          let seqStr = ('   ' + c.ev2str(headMove)).slice(-5);
+          let seqStr = (c.ev2str(headMove) + '   ').slice(0, 3);
           let nextMove = headMove;
 
           for (let i = 0; i < 7; i++) {
@@ -1598,7 +1598,7 @@
                   break;
               }
               nextMove = node.moves[best];
-              seqStr += '->' + ('   ' + c.ev2str(nextMove)).slice(-5);
+              seqStr += '->' + (c.ev2str(headMove) + '   ').slice(0, 3);
 
               if (!this.hasEdgeNode(best, nodeId, node.moveNumber + 1)) {
                   break;
@@ -1630,8 +1630,8 @@
               const value = (node.values[m] / 2.0 + 0.5) * 100.0;
               console.log(
                   '|%s|%s|%s|%s|%s| %s',
-                  ('   ' + c.ev2str(node.moves[m])).slice(-4),
-                  (visitCount + '      ').slice(0, 7),
+                  (c.ev2str(node.moves[m]) + '    ').slice(0, 4),
+                  ('       ' + visitCount).slice(-7),
                   ('  ' + rate.toFixed(1)).slice(-5),
                   ('  ' + value.toFixed(1)).slice(-5),
                   ('  ' + (node.probabilities[m] * 100.0).toFixed(1)).slice(-5),
