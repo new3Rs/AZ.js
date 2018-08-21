@@ -1287,6 +1287,27 @@
           }
           return array;
       }
+
+      /**
+       * ニューラルネットワークで局面を評価します。
+       * ランダムに局面を対称変換させる機能を持ちます。
+       * @param {NeuralNetwork} nn
+       * @param {bool} random
+       * @returns {Float32Array[]}
+       */
+      async evaluate(nn, random = true) {
+          const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+          let [prob, value] = await nn.evaluate(this.feature(symmetry));
+          if (symmetry !== 0) {
+              const p = new Float32Array(prob.length);
+              for (let rv = 0; rv < this.C.BVCNT; rv++) {
+                  p[rv] = prob[this.C.getSymmetricRawVertex(rv, symmetry)];
+              }
+              p[prob.length - 1] = prob[prob.length - 1];
+              prob = p;
+          }
+          return [prob, value];
+      }
   }
 
   /**
@@ -1644,16 +1665,7 @@
        * @returns {Float32Array[]}
        */
       async evaluate(b, random = true) {
-          const symmetry = random ? Math.floor(Math.random() * 8) : 0;
-          let [prob, value] = await this.nn.evaluate(b.feature(symmetry));
-          if (symmetry !== 0) {
-              const p = new Float32Array(prob.length);
-              for (let rv = 0; rv < b.C.BVCNT; rv++) {
-                  p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
-              }
-              p[prob.length - 1] = prob[prob.length - 1];
-              prob = p;
-          }
+          let [prob, value] = await b.evaluate(this.nn, random);
           if (this.evaluatePlugin) {
               prob = this.evaluatePlugin(b, prob);
           }

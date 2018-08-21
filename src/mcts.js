@@ -361,16 +361,7 @@ export class MCTS {
      * @returns {Float32Array[]}
      */
     async evaluate(b, random = true) {
-        const symmetry = random ? Math.floor(Math.random() * 8) : 0;
-        let [prob, value] = await this.nn.evaluate(b.feature(symmetry));
-        if (symmetry !== 0) {
-            const p = new Float32Array(prob.length);
-            for (let rv = 0; rv < b.C.BVCNT; rv++) {
-                p[rv] = prob[b.C.getSymmetricRawVertex(rv, symmetry)];
-            }
-            p[prob.length - 1] = prob[prob.length - 1];
-            prob = p;
-        }
+        let [prob, value] = await b.evaluate(this.nn, random);
         if (this.evaluatePlugin) {
             prob = this.evaluatePlugin(b, prob);
         }

@@ -10,6 +10,7 @@
  */
 import { shuffle, mostCommon, hash } from './utils.js';
 import { StoneGroup } from './stone_group.js';
+import { NeuralNetwork } from './neural_network_client.js';
 
 /// ニューラルネットワークへの入力に関する履歴の深さです。
 const KEEP_PREV_CNT = 7;
@@ -490,5 +491,26 @@ export class Board extends BaseBoard {
             array[featureIndex(p, FEATURE_CNT - 1)] = is_white_turn;
         }
         return array;
+    }
+
+    /**
+     * ニューラルネットワークで局面を評価します。
+     * ランダムに局面を対称変換させる機能を持ちます。
+     * @param {NeuralNetwork} nn
+     * @param {bool} random
+     * @returns {Float32Array[]}
+     */
+    async evaluate(nn, random = true) {
+        const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+        let [prob, value] = await nn.evaluate(this.feature(symmetry));
+        if (symmetry !== 0) {
+            const p = new Float32Array(prob.length);
+            for (let rv = 0; rv < this.C.BVCNT; rv++) {
+                p[rv] = prob[this.C.getSymmetricRawVertex(rv, symmetry)];
+            }
+            p[prob.length - 1] = prob[prob.length - 1];
+            prob = p;
+        }
+        return [prob, value];
     }
 }
