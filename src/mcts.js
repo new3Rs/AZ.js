@@ -96,11 +96,18 @@ class Node {
         return this.totalActionValues[index] / Math.max(this.visitCounts[index], 1) / 2.0 + 0.5;
     }
 
+    /**
+     * visitCountsを1増やし、sortedIndicesをクリアします。
+     * @param {Integer} index 
+     */
     incrementVisitCount(index) {
         this.visitCounts[index] += 1;
         this.sortedIndices = null;
     }
 
+    /**
+     * visitCountsの多い順のインデックスの配列を返します。
+     */
     getSortedIndices() {
         if (this.sortedIndices == null) {
             this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true);
@@ -355,7 +362,6 @@ export class MCTS {
 
     /**
      * ニューラルネットワークで局面を評価します。
-     * ランダムに局面を対称変換させる機能を持ちます。
      * @param {Board} b
      * @param {bool} random
      * @returns {Float32Array[]}
