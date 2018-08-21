@@ -1615,7 +1615,7 @@
                   break;
               }
               nextMove = node.moves[best];
-              seqStr += '->' + (c.ev2str(headMove) + '   ').slice(0, 3);
+              seqStr += '->' + (c.ev2str(nextMove) + '   ').slice(0, 3);
 
               if (!this.hasEdgeNode(best, nodeId, node.moveNumber + 1)) {
                   break;
