@@ -413,9 +413,6 @@
    * @license MIT
    */
 
-   // 座標変換用定数です。
-  const OFFSET = 'a'.charCodeAt(0) - 1;
-
   /** x座標ラベル文字列です。 */
   const X_LABELS = '@ABCDEFGHJKLMNOPQRST';
 
@@ -492,6 +489,7 @@
        * @returns {Integer[]} xy座標
        */
       move2xy(s) {
+          const OFFSET = 'a'.charCodeAt(0) - 1;
           return [s.charCodeAt(0) - OFFSET, this.BSIZE + 1 - (s.charCodeAt(1) - OFFSET)];
       }
 
