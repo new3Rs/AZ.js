@@ -10,6 +10,9 @@
  // 座標変換用定数です。
 const OFFSET = 'a'.charCodeAt(0) - 1;
 
+/** x座標ラベル文字列です。 */
+export const X_LABELS = '@ABCDEFGHJKLMNOPQRST';
+
 /**
  * 交点の状態を表す列挙型です。
  */
@@ -66,7 +69,6 @@ export const IntersectionState = {
  */
 export class BoardConstants {
     constructor(size = 19) {
-        this.X_LABELS = '@ABCDEFGHJKLMNOPQRST';
         this.BSIZE = size; // 碁盤サイズ
         this.EBSIZE = this.BSIZE + 2; // 拡張碁盤サイズ
         this.EBVCNT = this.EBSIZE * this.EBSIZE;
@@ -138,7 +140,7 @@ export class BoardConstants {
             return 'pass';
         } else {
             const [x, y] = this.ev2xy(ev);
-            return this.X_LABELS.charAt(x) + y.toString();
+            return X_LABELS.charAt(x) + y.toString();
         }
     }
 
@@ -152,7 +154,7 @@ export class BoardConstants {
         if (vStr === 'PASS' || vStr === 'RESIGN') {
             return this.PASS;
         } else {
-            const x = this.X_LABELS.indexOf(vStr.charAt(0));
+            const x = X_LABELS.indexOf(vStr.charAt(0));
             const y = parseInt(vStr.slice(1));
             return this.xy2ev(x, y);
         }

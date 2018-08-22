@@ -9,9 +9,8 @@
  * @license MIT
  */
 import { shuffle, mostCommon, hash } from './utils.js';
-import { IntersectionState } from './board_constants.js';
+import { X_LABELS, IntersectionState } from './board_constants.js';
 import { StoneGroup } from './stone_group.js';
-import { NeuralNetwork } from './neural_network_client.js';
 
 /// ニューラルネットワークへの入力に関する履歴の深さです。
 const KEEP_PREV_CNT = 7;
@@ -372,7 +371,7 @@ class BaseBoard {
     printXlabel() {
         let lineStr = '  ';
         for (let x = 1; x <= this.C.BSIZE; x++) {
-            lineStr += ` ${this.C.X_LABELS[x]} `;
+            lineStr += ` ${X_LABELS[x]} `;
         }
         console.log(lineStr);
     }
