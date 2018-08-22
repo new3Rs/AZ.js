@@ -11,7 +11,28 @@
 const OFFSET = 'a'.charCodeAt(0) - 1;
 
 /**
- * 碁盤定数と座標変換のクラスです。<br>
+ * 交点の状態を表す列挙型です。
+ */
+export const IntersectionState = {
+    WHITE: 0,
+    BLACK: 1,
+    EMPTY: 2,
+    EXTERIOR: 3,
+    /**
+     * 相手の色を返します。
+     * @param {IntersectionState} color 
+     */
+    opponentOf(color) {
+        switch (color) {
+            case this.WHITE: return this.BLACK;
+            case this.BLACK: return this.WHITE;
+            default: throw new Error('invalid color');
+        }
+    }
+};
+
+/**
+ * 碁盤定数と座標変換の列挙型を生成するクラスです。<br>
  * 碁盤クラスでは座標系に拡張線形座標を使います。
  * 拡張線形座標は盤外の交点を持つ碁盤の座標です。
  * 四路盤の場合、以下のような構造になります。
@@ -45,10 +66,6 @@ const OFFSET = 'a'.charCodeAt(0) - 1;
  */
 export class BoardConstants {
     constructor(size = 19) {
-        this.WHITE = 0;
-        this.BLACK = 1;
-        this.EMPTY = 2;
-        this.EXTERIOR = 3;
         this.X_LABELS = '@ABCDEFGHJKLMNOPQRST';
         this.BSIZE = size; // 碁盤サイズ
         this.EBSIZE = this.BSIZE + 2; // 拡張碁盤サイズ
@@ -61,14 +78,6 @@ export class BoardConstants {
         Object.freeze(this);
     }
 
-    opponentOf(color) {
-        switch (color) {
-            case this.WHITE: return this.BLACK;
-            case this.BLACK: return this.WHITE;
-            default: throw new Error('invalid color');
-        }
-    }
-    
     /**
      * SGFフォーマットの座標をxy座標に変換します。
      * @param {string} s 

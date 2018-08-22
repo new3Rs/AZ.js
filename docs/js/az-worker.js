@@ -417,7 +417,28 @@
   const OFFSET = 'a'.charCodeAt(0) - 1;
 
   /**
-   * 碁盤定数と座標変換のクラスです。<br>
+   * 交点の状態を表す列挙型です。
+   */
+  const IntersectionState = {
+      WHITE: 0,
+      BLACK: 1,
+      EMPTY: 2,
+      EXTERIOR: 3,
+      /**
+       * 相手の色を返します。
+       * @param {IntersectionState} color 
+       */
+      opponentOf(color) {
+          switch (color) {
+              case this.WHITE: return this.BLACK;
+              case this.BLACK: return this.WHITE;
+              default: throw new Error('invalid color');
+          }
+      }
+  };
+
+  /**
+   * 碁盤定数と座標変換の列挙型を生成するクラスです。<br>
    * 碁盤クラスでは座標系に拡張線形座標を使います。
    * 拡張線形座標は盤外の交点を持つ碁盤の座標です。
    * 四路盤の場合、以下のような構造になります。
@@ -451,10 +472,6 @@
    */
   class BoardConstants {
       constructor(size = 19) {
-          this.WHITE = 0;
-          this.BLACK = 1;
-          this.EMPTY = 2;
-          this.EXTERIOR = 3;
           this.X_LABELS = '@ABCDEFGHJKLMNOPQRST';
           this.BSIZE = size; // 碁盤サイズ
           this.EBSIZE = this.BSIZE + 2; // 拡張碁盤サイズ
@@ -467,14 +484,6 @@
           Object.freeze(this);
       }
 
-      opponentOf(color) {
-          switch (color) {
-              case this.WHITE: return this.BLACK;
-              case this.BLACK: return this.WHITE;
-              default: throw new Error('invalid color');
-          }
-      }
-      
       /**
        * SGFフォーマットの座標をxy座標に変換します。
        * @param {string} s 
@@ -834,7 +843,7 @@
           this.komi = komi;
           /** 交点の状態配列です。拡張線形座標です。 */
           this.state = new Uint8Array(this.C.EBVCNT);
-          this.state.fill(this.C.EXTERIOR);
+          this.state.fill(IntersectionState.EXTERIOR);
           this.id = new Uint16Array(this.C.EBVCNT); // 交点の連IDです。
           this.next = new Uint16Array(this.C.EBVCNT); // 交点を含む連の次の石の座標です。
           this.sg = []; // 連情報です。
@@ -844,7 +853,7 @@
           this.prevState = [];
           this.ko = this.C.VNULL;
           /** 手番です。 */
-          this.turn = this.C.BLACK;
+          this.turn = IntersectionState.BLACK;
           /** 現在の手数です。 */
           this.moveNumber = 0;
           /** 直前の着手です。 */
@@ -860,7 +869,7 @@
       reset() {
           for (let x = 1; x <= this.C.BSIZE; x++) {
               for (let y = 1; y <= this.C.BSIZE; y++) {
-                  this.state[this.C.xy2ev(x, y)] = this.C.EMPTY;
+                  this.state[this.C.xy2ev(x, y)] = IntersectionState.EMPTY;
               }
           }
           for (let i = 0; i < this.id.length; i++) {
@@ -875,7 +884,7 @@
               this.prevState.push(this.state.slice());
           }
           this.ko = this.C.VNULL;
-          this.turn = this.C.BLACK;
+          this.turn = IntersectionState.BLACK;
           this.moveNumber = 0;
           this.prevMove = this.C.VNULL;
           this.removeCnt = 0;
@@ -922,7 +931,7 @@
           let vTmp = v;
           while (true) {
               this.removeCnt += 1;
-              this.state[vTmp] = this.C.EMPTY;
+              this.state[vTmp] = IntersectionState.EMPTY;
               this.id[vTmp] = vTmp;
               for (const nv of this.C.neighbors(vTmp)) {
                   this.sg[this.id[nv]].add(vTmp);
@@ -974,7 +983,7 @@
           this.id[v] = v;
           this.sg[this.id[v]].clear(true);
           for (const nv of this.C.neighbors(v)) {
-              if (this.state[nv] === this.C.EMPTY) {
+              if (this.state[nv] === IntersectionState.EMPTY) {
                   this.sg[this.id[v]].add(nv);
               } else {
                   this.sg[this.id[nv]].sub(v);
@@ -986,7 +995,7 @@
               }
           }
           this.removeCnt = 0;
-          const opponentStone = this.C.opponentOf(this.turn);
+          const opponentStone = IntersectionState.opponentOf(this.turn);
           for (const nv of this.C.neighbors(v)) {
               if (this.state[nv] === opponentStone && this.sg[this.id[nv]].getLibCnt() === 0) {
                   this.remove(nv);
@@ -1003,7 +1012,7 @@
       legal(v) {
           if (v === this.C.PASS) {
               return true;
-          } else if (v === this.ko || this.state[v] !== this.C.EMPTY) {
+          } else if (v === this.ko || this.state[v] !== IntersectionState.EMPTY) {
               return false;
           }
 
@@ -1012,17 +1021,17 @@
           for (const nv of this.C.neighbors(v)) {
               const c = this.state[nv];
               switch (c) {
-                  case this.C.EMPTY:
+                  case IntersectionState.EMPTY:
                   return true;
-                  case this.C.BLACK:
-                  case this.C.WHITE:
+                  case IntersectionState.BLACK:
+                  case IntersectionState.WHITE:
                   stoneCnt[c] += 1;
                   if (this.sg[this.id[nv]].getLibCnt() === 1) {
                       atrCnt[c] += 1;
                   }
               }
           }
-          return atrCnt[this.C.opponentOf(this.turn)] !== 0 ||
+          return atrCnt[IntersectionState.opponentOf(this.turn)] !== 0 ||
               atrCnt[this.turn] < stoneCnt[this.turn];
       }
 
@@ -1037,10 +1046,10 @@
           if (v === this.C.PASS) {
               return false;
           }
-          const opponent = this.C.opponentOf(pl);
+          const opponent = IntersectionState.opponentOf(pl);
           for (const nv of this.C.neighbors(v)) {
               const c = this.state[nv];
-              if (c === this.C.EMPTY || c === opponent) {
+              if (c === IntersectionState.EMPTY || c === opponent) {
                   return false;
               }
           }
@@ -1089,7 +1098,7 @@
           }
           this.prevMove = v;
           this.history.push(v);
-          this.turn = this.C.opponentOf(this.turn);
+          this.turn = IntersectionState.opponentOf(this.turn);
           this.moveNumber += 1;
           return true;
       }
@@ -1100,7 +1109,7 @@
       randomPlay() {
           const emptyList = [];
           for (let i = 0; i < this.state.length; i++) {
-              if (this.state[i] === this.C.EMPTY) {
+              if (this.state[i] === IntersectionState.EMPTY) {
                   emptyList.push(i);
               }
           }
@@ -1123,17 +1132,17 @@
           const stoneCnt = [0, 0];
           for (let v = 0; v < this.C.EBVCNT; v++) {
               const s = this.state[v];
-              if (s === this.C.BLACK || s === this.C.WHITE) {
+              if (s === IntersectionState.BLACK || s === IntersectionState.WHITE) {
                   stoneCnt[s] += 1;
-              } else if (s === this.C.EMPTY) {
+              } else if (s === IntersectionState.EMPTY) {
                   const nbrCnt = [0, 0, 0, 0];
                   for (const nv of this.C.neighbors(v)) {
                       nbrCnt[this.state[nv]] += 1;
                   }
-                  if (nbrCnt[this.C.WHITE] > 0 && nbrCnt[this.C.BLACK] === 0) {
-                      stoneCnt[this.C.WHITE] += 1;
-                  } else if (nbrCnt[this.C.BLACK] > 0 && nbrCnt[this.C.WHITE] === 0) {
-                      stoneCnt[this.C.BLACK] += 1;
+                  if (nbrCnt[IntersectionState.WHITE] > 0 && nbrCnt[IntersectionState.BLACK] === 0) {
+                      stoneCnt[IntersectionState.WHITE] += 1;
+                  } else if (nbrCnt[IntersectionState.BLACK] > 0 && nbrCnt[IntersectionState.WHITE] === 0) {
+                      stoneCnt[IntersectionState.BLACK] += 1;
                   }
               }
           }
@@ -1182,13 +1191,13 @@
                   const v = this.C.xy2ev(x, y);
                   let xStr;
                   switch (this.state[v]) {
-                      case this.C.BLACK:
+                      case IntersectionState.BLACK:
                       xStr = v === this.prevMove ? '[X]' : ' X ';
                       break;
-                      case this.C.WHITE:
+                      case IntersectionState.WHITE:
                       xStr = v === this.prevMove ? '[O]' : ' O ';
                       break;
-                      case this.C.EMPTY:
+                      case IntersectionState.EMPTY:
                       xStr = ' . ';
                       break;
                       default:
@@ -1256,7 +1265,7 @@
       feature(symmetry = 0) {
           const array = new Float32Array(this.C.BVCNT * FEATURE_CNT);
           const my = this.turn;
-          const opp = this.C.opponentOf(this.turn);
+          const opp = IntersectionState.opponentOf(this.turn);
 
           const N = KEEP_PREV_CNT + 1;
           for (let p = 0; p < this.C.BVCNT; p++) {
@@ -1274,7 +1283,7 @@
               }
           }
           let is_black_turn, is_white_turn;
-          if (my === this.C.BLACK) {
+          if (my === IntersectionState.BLACK) {
               is_black_turn = 1.0;
               is_white_turn = 0.0;
           } else {
