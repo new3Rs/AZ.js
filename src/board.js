@@ -320,29 +320,40 @@ class BaseBoard {
     }
 
     /**
-     * スコア差を返します。
-     * 同じ色の石の数と一方の石にだけ隣接する交点の数がその色のスコアという簡易ルールです。
-     * (randomPlayを実行した後では中国ルールと同じ値になります)
+     * colorかcolorに届く交点の数を返します。
+     * @private
+     * @param {InersectionState} color 
+     * @returns {Integer}
      */
-    score() {
-        const stoneCnt = [0, 0];
-        for (let v = 0; v < this.C.EBVCNT; v++) {
-            const s = this.state[v];
-            if (s === IntersectionState.BLACK || s === IntersectionState.WHITE) {
-                stoneCnt[s] += 1;
-            } else if (s === IntersectionState.EMPTY) {
-                const nbrCnt = [0, 0, 0, 0];
-                for (const nv of this.C.neighbors(v)) {
-                    nbrCnt[this.state[nv]] += 1;
-                }
-                if (nbrCnt[IntersectionState.WHITE] > 0 && nbrCnt[IntersectionState.BLACK] === 0) {
-                    stoneCnt[IntersectionState.WHITE] += 1;
-                } else if (nbrCnt[IntersectionState.BLACK] > 0 && nbrCnt[IntersectionState.WHITE] === 0) {
-                    stoneCnt[IntersectionState.BLACK] += 1;
+    pointsReach(color) {
+        const bd = this.state.map(e => e === color ? 1 : 0);
+        let reachable = bd.reduce((a, b) => a + b);
+        const open = [];
+        for (let i = 0; i < bd.length; i++) {
+            if (bd[i] === 1) {
+                open.push(i);
+            }
+        }
+
+        while (open.length > 0) {
+            const v = open.shift();
+            for (const n of this.C.neighbors(v)) {
+                if (bd[n] !== 1 && this.state[n] === IntersectionState.EMPTY) {
+                    reachable++;
+                    bd[n] = 1;
+                    open.push(n);
                 }
             }
         }
-        return stoneCnt[1] - stoneCnt[0] - this.komi;
+        return reachable;
+    }
+
+    /**
+     * Tromp-Tayerスコアを返します。
+     * @returns {Number}
+     */
+    score() {
+        return this.pointsReach(IntersectionState.BLACK) - this.pointsReach(IntersectionState.WHITE) - this.komi;
     }
 
     /**
