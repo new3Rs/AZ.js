@@ -233,7 +233,7 @@ class BaseBoard {
 
     /**
      * 交点vが眼形かどうかを返します。
-     * (バグ) コウ付きでコウを取れる場合、眼形と判定します。
+     * コウ付きでコウを取れる場合、眼形と判定します。
      * @private
      * @param {Uint16} v 
      * @param {number} pl player color
@@ -245,17 +245,21 @@ class BaseBoard {
         const opponent = IntersectionState.opponentOf(pl);
         for (const nv of this.C.neighbors(v)) {
             const c = this.state[nv];
-            if (c === IntersectionState.EMPTY || c === opponent) {
+            if (c === IntersectionState.EMPTY || c === opponent) { // ポン抜きの形でなければ
+                return false;
+            }
+            if (c === IntersectionState.pl && this.sg[this.id[nv]].getLibCnt() === 1) { // ポン抜きの形を作る石のどれかがアタリなら
                 return false;
             }
         }
         const diagCnt = [0, 0, 0, 0];
-        for (const nv of this.C.diagonals(v)) {
+        const diagonals = this.C.diagonals(v);
+        for (const nv of diagonals) {
             diagCnt[this.state[nv]] += 1;
         }
         const wedgeCnt = diagCnt[opponent] + (diagCnt[3] > 0 ? 1 : 0);
         if (wedgeCnt === 2) {
-            for (const nv of this.C.diagonals(v)) {
+            for (const nv of diagonals) {
                 if (this.state[nv] === opponent &&
                     this.sg[this.id[nv]].getLibCnt() === 1 &&
                     this.sg[this.id[nv]].getVAtr() !== this.ko) {
