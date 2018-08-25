@@ -12,6 +12,7 @@ import { NeuralNetwork } from './neural_network_client.js';
 import { BoardConstants } from './board_constants.js';
 import { Board } from './board.js';
 import { MCTS } from './mcts.js';
+import { SearchMode } from './search_mode.js';
 
 /**
  * 対局を行う思考エンジンの基本クラスです。
@@ -70,7 +71,7 @@ export class AZjsEngineBase {
      * 次の手を返します。状況に応じて投了します。
      * 戻り値[x, y]は左上が1-オリジンの2次元座標です。もしくは'resgin'または'pass'を返します。
      * 内部で保持している局面も進めます。
-     * @param {string} mode 'hard', 'normal', 'easy'
+     * @param {SearchMode} mode
      * @returns {Object[]} [(Integer[]|string), Number]
      */
     async genmove(mode) {
@@ -109,14 +110,14 @@ export class AZjsEngineBase {
      * MCTS探索します。
      * modeに応じて次の一手と勝率を返します。
      * @private
-     * @param {String} mode
+     * @param {SearchMode} mode
      * @param {bool} ponder
      * @returns {Object[]} [Integer, Number]
      */
     async search(mode, ponder = false) {
         const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
         switch (mode) {
-            case 'normal': {
+            case SearchMode.NORMAL: {
                 const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                 const winrates = indices.map(e => [e, node.winrate(e)]);
                 winrates.sort((a, b) => b[1] - a[1]);
@@ -124,7 +125,7 @@ export class AZjsEngineBase {
                 const e = winrates[i < 0 ? winrates.length - 1 : i === 0 ? 0 : i - 1];
                 return [node.moves[e[0]], e[1]];
             }
-            case 'easy': {
+            case SearchMode.EASY: {
                 const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                 const winrates = indices.map(e => [e, node.winrate(e), node.visitCounts[e]]);
                 winrates.sort((a, b) => b[1] - a[1]);

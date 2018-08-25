@@ -1847,6 +1847,34 @@
   }
 
   /**
+   * @file 探索モードの列挙型です。
+   */
+  /*
+   * @author 市川雄二
+   * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
+   * @license MIT
+   */
+
+  /**
+   * 探索モードの列挙型です。
+   */
+  const SearchMode = {
+      HARD: 0,
+      NORMAL: 1,
+      EASY: 2,
+      fromString(str) {
+          switch (str) {
+              case 'normal':
+              return this.NORNAL;
+              case 'easy':
+              return this.EASY;
+              default:
+              return this.HARD;
+          }
+      }
+  };
+
+  /**
    * @file 対局を行う思考エンジンクラスAZjsEngineのコードです。
    * ウェブワーカで動かすことを前提に、メインスレッドのアプリとNeuralNetworkの2つと通信しながらモンテカルロツリー探索を実行します。
    */
@@ -1908,7 +1936,7 @@
        * 次の手を返します。状況に応じて投了します。
        * 戻り値[x, y]は左上が1-オリジンの2次元座標です。もしくは'resgin'または'pass'を返します。
        * 内部で保持している局面も進めます。
-       * @param {string} mode 'hard', 'normal', 'easy'
+       * @param {SearchMode} mode
        * @returns {Object[]} [(Integer[]|string), Number]
        */
       async genmove(mode) {
@@ -1947,14 +1975,14 @@
        * MCTS探索します。
        * modeに応じて次の一手と勝率を返します。
        * @private
-       * @param {String} mode
+       * @param {SearchMode} mode
        * @param {bool} ponder
        * @returns {Object[]} [Integer, Number]
        */
       async search(mode, ponder = false) {
           const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
           switch (mode) {
-              case 'normal': {
+              case SearchMode.NORMAL: {
                   const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                   const winrates = indices.map(e => [e, node.winrate(e)]);
                   winrates.sort((a, b) => b[1] - a[1]);
@@ -1962,7 +1990,7 @@
                   const e = winrates[i < 0 ? winrates.length - 1 : i === 0 ? 0 : i - 1];
                   return [node.moves[e[0]], e[1]];
               }
-              case 'easy': {
+              case SearchMode.EASY: {
                   const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                   const winrates = indices.map(e => [e, node.winrate(e), node.visitCounts[e]]);
                   winrates.sort((a, b) => b[1] - a[1]);

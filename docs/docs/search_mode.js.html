@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: StoneGroup</title>
+    <title>JSDoc: Source: search_mode.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,184 +17,45 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: StoneGroup</h1>
+    <h1 class="page-title">Source: search_mode.js</h1>
 
     
 
 
 
-
-<section>
-
-<header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>StoneGroup<span class="signature">(boardConstants)</span><span class="type-signature"></span></h2>
-        
-            <div class="class-description">連情報クラス</div>
-        
-    
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-
-    
-    <h2>Constructor</h2>
-    
-
-    
-    <h4 class="name" id="StoneGroup"><span class="type-signature"></span>new StoneGroup<span class="signature">(boardConstants)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>boardConstants</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="stone_group.js.html">stone_group.js</a>, <a href="stone_group.js.html#line13">line 13</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @file 探索モードの列挙型です。
+ */
+/*
+ * @author 市川雄二
+ * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
+ * @license MIT
+ */
+
+/**
+ * 探索モードの列挙型です。
+ */
+export const SearchMode = {
+    HARD: 0,
+    NORMAL: 1,
+    EASY: 2,
+    fromString(str) {
+        switch (str) {
+            case 'normal':
+            return this.NORNAL;
+            case 'easy':
+            return this.EASY;
+            default:
+            return this.HARD;
+        }
+    }
+};
+</code></pre>
+        </article>
+    </section>
 
 
 

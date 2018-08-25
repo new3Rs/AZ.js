@@ -8,6 +8,7 @@
  */
 import { WorkerRMI, resigterWorkerRMI } from 'worker-rmi';
 import { NeuralNetwork } from './neural_network.js';
+import { SearchMode } from './search_mode.js';
 
 // 思考エンジンAZjsEngineの本体をウェブワーカーとして動かします。
 const worker = new Worker('js/az-worker.js');
@@ -53,7 +54,7 @@ export class AZjsEngine extends WorkerRMI {
         await this.invokeRM('timeSettings', [mainTime, byoyomi]);
     }
 
-    async genmove(mode = 'best') {
+    async genmove(mode = SearchMode.HARD) {
         return await this.invokeRM('genmove', [mode]);
     }
 

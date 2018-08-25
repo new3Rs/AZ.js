@@ -8,6 +8,7 @@
  */
 /* global $ JGO i18n */
 import { i18nSpeak } from './speech.js';
+import { SearchMode } from './search_mode.js';
 
 /**
  * MVCのコントローラのオブザーバークラスです。
@@ -30,7 +31,7 @@ export class PlayController {
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
-        this.mode = mode === 'very-hard' ? 'hard' : mode;
+        this.mode = SearchMode.fromString(mode);
         this.ponder = mode === 'very-hard' && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {

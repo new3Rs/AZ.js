@@ -40,6 +40,7 @@ import { NeuralNetwork } from './neural_network_client.js';
 import { BoardConstants } from './board_constants.js';
 import { Board } from './board.js';
 import { MCTS } from './mcts.js';
+import { SearchMode } from './search_mode.js';
 
 /**
  * 対局を行う思考エンジンの基本クラスです。
@@ -98,7 +99,7 @@ export class AZjsEngineBase {
      * 次の手を返します。状況に応じて投了します。
      * 戻り値[x, y]は左上が1-オリジンの2次元座標です。もしくは'resgin'または'pass'を返します。
      * 内部で保持している局面も進めます。
-     * @param {string} mode 'hard', 'normal', 'easy'
+     * @param {SearchMode} mode
      * @returns {Object[]} [(Integer[]|string), Number]
      */
     async genmove(mode) {
@@ -137,14 +138,14 @@ export class AZjsEngineBase {
      * MCTS探索します。
      * modeに応じて次の一手と勝率を返します。
      * @private
-     * @param {String} mode
+     * @param {SearchMode} mode
      * @param {bool} ponder
      * @returns {Object[]} [Integer, Number]
      */
     async search(mode, ponder = false) {
         const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
         switch (mode) {
-            case 'normal': {
+            case SearchMode.NORMAL: {
                 const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                 const winrates = indices.map(e => [e, node.winrate(e)]);
                 winrates.sort((a, b) => b[1] - a[1]);
@@ -152,7 +153,7 @@ export class AZjsEngineBase {
                 const e = winrates[i &lt; 0 ? winrates.length - 1 : i === 0 ? 0 : i - 1];
                 return [node.moves[e[0]], e[1]];
             }
-            case 'easy': {
+            case SearchMode.EASY: {
                 const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
                 const winrates = indices.map(e => [e, node.winrate(e), node.visitCounts[e]]);
                 winrates.sort((a, b) => b[1] - a[1]);
@@ -211,13 +212,13 @@ export class AZjsEngineBase {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#IntersectionState">IntersectionState</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li><li><a href="global.html#X_LABELS">X_LABELS</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#hash">hash</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#IntersectionState">IntersectionState</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#SearchMode">SearchMode</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li><li><a href="global.html#X_LABELS">X_LABELS</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Aug 24 2018 10:41:32 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sun Aug 26 2018 08:32:04 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -586,6 +586,34 @@ class NeuralNetwork {
 }
 
 /**
+ * @file 探索モードの列挙型です。
+ */
+/*
+ * @author 市川雄二
+ * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
+ * @license MIT
+ */
+
+/**
+ * 探索モードの列挙型です。
+ */
+const SearchMode = {
+    HARD: 0,
+    NORMAL: 1,
+    EASY: 2,
+    fromString(str) {
+        switch (str) {
+            case 'normal':
+            return this.NORNAL;
+            case 'easy':
+            return this.EASY;
+            default:
+            return this.HARD;
+        }
+    }
+};
+
+/**
  * @file 思考エンジンAZjsEngineのRMI版です。ドキュメントは本体側のコードを参照してください。
  */
 
@@ -633,7 +661,7 @@ class AZjsEngine extends WorkerRMI_1 {
         await this.invokeRM('timeSettings', [mainTime, byoyomi]);
     }
 
-    async genmove(mode = 'best') {
+    async genmove(mode = SearchMode.HARD) {
         return await this.invokeRM('genmove', [mode]);
     }
 
@@ -1059,7 +1087,7 @@ class PlayController {
         this.isSelfPlay = isSelfPlay;
         this.byoyomi = byoyomi;
         this.fisherRule = fisherRule;
-        this.mode = mode === 'very-hard' ? 'hard' : mode;
+        this.mode = SearchMode.fromString(mode);
         this.ponder = mode === 'very-hard' && !isSelfPlay;
         this.isFirstMove = true;
         if (this.fisherRule) {
