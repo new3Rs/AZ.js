@@ -694,9 +694,12 @@
    * @param {bool} reverse 
    */
   function argsort(array, reverse) {
-      const en = Array.from(array).map((e, i) => [i, e]);
-      en.sort((a, b) => reverse ? b[1] - a[1] : a[1] - b[1]);
-      return en.map(e => e[0]);
+      const indices = Array.from(array).map((e, i) => i);
+      if (reverse) {
+          return indices.sort((a, b) => array[b] - array[a]);
+      } else {
+          return indices.sort((a, b) => array[a] - array[b]);
+      }
   }
 
   /**
@@ -1943,15 +1946,13 @@
           const [move, winRate] = await this.search(mode);
           if (winRate < 0.01) {
               return ['resign', winRate];
-          } else {
-              if (this.b.play(move)) {
-                  return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
-              } else {
-                  this.b.showboard();
-                  console.log(this.b.candidates());
-                  throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
-              }
           }
+          if (this.b.play(move)) {
+              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+          }
+          this.b.showboard();
+          console.log(this.b.candidates());
+          throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
       }
 
       /**
