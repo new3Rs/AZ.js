@@ -1322,9 +1322,9 @@ class PlayController {
                 } catch (e) {
                     console.error(e);
                     if (e === 'RangeError: Source is too large') {
-                        confirm(i18n.sourceIsTooLarge);
+                        alert(i18n.sourceIsTooLarge);
                     } else {
-                        confirm(e);
+                        alert(e);
                     }
                 }
             }, 0);
