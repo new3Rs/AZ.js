@@ -35,6 +35,11 @@ export class StoneGroup {
         return this.vAtr;
     }
 
+    /**
+     * stoneがtrueの時、石1つの連として初期化します。
+     * stoneがfalseの時、空点として初期化します。
+     * @param {bool} stone 
+     */
     clear(stone) {
         this.libCnt = stone ? 0 : this.C.VNULL;
         this.size = stone ? 1 : this.C.VNULL;
@@ -42,6 +47,10 @@ export class StoneGroup {
         this.libs.clear();
     }
 
+    /**
+     * 空点vを追加します。
+     * @param {Uint16} v 
+     */
     add(v) {
         if (this.libs.has(v)) {
             return;
@@ -51,6 +60,10 @@ export class StoneGroup {
         this.vAtr = v;
     }
 
+    /**
+     * 空点vを削除します。
+     * @param {Uint16} v 
+     */
     sub(v) {
         if (!this.libs.has(v)) {
             return;
@@ -59,6 +72,10 @@ export class StoneGroup {
         this.libCnt -= 1;
     }
 
+    /**
+     * 連をマージします。
+     * @param {StoneGroup} other 
+     */
     merge(other) {
         this.libs = new Set([...this.libs, ...other.libs]);
         this.libCnt = this.libs.size;
@@ -68,6 +85,10 @@ export class StoneGroup {
         }
     }
 
+    /**
+     * コピーします。
+     * @param {StoneGroup} dest 
+     */
     copyTo(dest) {
         dest.libCnt = this.libCnt;
         dest.size = this.size;

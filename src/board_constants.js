@@ -143,7 +143,7 @@ export class BoardConstants {
     }
 
     /**
-     * GTPが使用する拡張線形座標に変換します。
+     * GTPが使用する座標を拡張線形座標に変換します。
      * @param {string} v
      * @returns {Uint16} extended vertex
      */
@@ -161,6 +161,7 @@ export class BoardConstants {
     /**
      * vに隣接する交点の座標を返します。
      * @param {Uint16}} v 拡張線形座標
+     * @returns {Uint16[]}
      */
     neighbors(v) {
         return [v + 1, v + this.EBSIZE, v - 1, v - this.EBSIZE];
@@ -169,6 +170,7 @@ export class BoardConstants {
     /**
      * vに斜め隣接する交点の座標を返します。
      * @param {Uint16}} v 拡張線形座標
+     * @returns {Uint16[]}
      */
     diagonals(v) {
         return [

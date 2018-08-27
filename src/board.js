@@ -18,9 +18,8 @@ const FEATURE_CNT = KEEP_PREV_CNT * 2 + 4;
 
 /**
  * ニューラルネットワークの入力のインデックスを計算します。
- * @param {*} rv 碁盤の交点の線形座標
- * @param {*} f フィーチャー番号
- * @param {*} symmetry 対称変換
+ * @param {UInt16} rv 碁盤の交点の線形座標
+ * @param {Integer} f フィーチャー番号
  */
 function featureIndex(rv, f) {
     return rv * FEATURE_CNT + f;
@@ -37,7 +36,7 @@ class BaseBoard {
     constructor(constants, komi = 7.5) {
         this.C = constants;
         this.komi = komi;
-        /** 交点の状態配列です。拡張線形座標です。 */
+        /** 交点の状態配列です。インデックスは拡張線形座標です。 */
         this.state = new Uint8Array(this.C.EBVCNT);
         this.state.fill(IntersectionState.EXTERIOR);
         this.id = new Uint16Array(this.C.EBVCNT); // 交点の連IDです。

@@ -549,7 +549,7 @@
       }
 
       /**
-       * GTPが使用する拡張線形座標に変換します。
+       * GTPが使用する座標を拡張線形座標に変換します。
        * @param {string} v
        * @returns {Uint16} extended vertex
        */
@@ -567,6 +567,7 @@
       /**
        * vに隣接する交点の座標を返します。
        * @param {Uint16}} v 拡張線形座標
+       * @returns {Uint16[]}
        */
       neighbors(v) {
           return [v + 1, v + this.EBSIZE, v - 1, v - this.EBSIZE];
@@ -575,6 +576,7 @@
       /**
        * vに斜め隣接する交点の座標を返します。
        * @param {Uint16}} v 拡張線形座標
+       * @returns {Uint16[]}
        */
       diagonals(v) {
           return [
@@ -763,6 +765,11 @@
           return this.vAtr;
       }
 
+      /**
+       * stoneがtrueの時、石1つの連として初期化します。
+       * stoneがfalseの時、空点として初期化します。
+       * @param {bool} stone 
+       */
       clear(stone) {
           this.libCnt = stone ? 0 : this.C.VNULL;
           this.size = stone ? 1 : this.C.VNULL;
@@ -770,6 +777,10 @@
           this.libs.clear();
       }
 
+      /**
+       * 空点vを追加します。
+       * @param {Uint16} v 
+       */
       add(v) {
           if (this.libs.has(v)) {
               return;
@@ -779,6 +790,10 @@
           this.vAtr = v;
       }
 
+      /**
+       * 空点vを削除します。
+       * @param {Uint16} v 
+       */
       sub(v) {
           if (!this.libs.has(v)) {
               return;
@@ -787,6 +802,10 @@
           this.libCnt -= 1;
       }
 
+      /**
+       * 連をマージします。
+       * @param {StoneGroup} other 
+       */
       merge(other) {
           this.libs = new Set([...this.libs, ...other.libs]);
           this.libCnt = this.libs.size;
@@ -796,6 +815,10 @@
           }
       }
 
+      /**
+       * コピーします。
+       * @param {StoneGroup} dest 
+       */
       copyTo(dest) {
           dest.libCnt = this.libCnt;
           dest.size = this.size;
@@ -816,9 +839,8 @@
 
   /**
    * ニューラルネットワークの入力のインデックスを計算します。
-   * @param {*} rv 碁盤の交点の線形座標
-   * @param {*} f フィーチャー番号
-   * @param {*} symmetry 対称変換
+   * @param {UInt16} rv 碁盤の交点の線形座標
+   * @param {Integer} f フィーチャー番号
    */
   function featureIndex(rv, f) {
       return rv * FEATURE_CNT + f;
@@ -835,7 +857,7 @@
       constructor(constants, komi = 7.5) {
           this.C = constants;
           this.komi = komi;
-          /** 交点の状態配列です。拡張線形座標です。 */
+          /** 交点の状態配列です。インデックスは拡張線形座標です。 */
           this.state = new Uint8Array(this.C.EBVCNT);
           this.state.fill(IntersectionState.EXTERIOR);
           this.id = new Uint16Array(this.C.EBVCNT); // 交点の連IDです。
