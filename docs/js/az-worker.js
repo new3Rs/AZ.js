@@ -670,23 +670,14 @@
    */
   function mostCommon(array) {
       const map = new Map();
-      for (let i = 0; i < array.length; i++) {
-          const e = array[i];
+      for (const e of array) {
           if (map.has(e)) {
               map.set(e, map.get(e) + 1);
           } else {
               map.set(e, 1);
           }
       }
-      let maxKey;
-      let maxValue = -1;
-      for (const [key, value] of map.entries()) {
-          if (value > maxValue) {
-              maxKey = key;
-              maxValue = value;
-          }
-      }
-      return maxKey;
+      return argmax(map);
   }
 
   /** arrayをソートした時のインデックス配列を返します。
@@ -703,13 +694,14 @@
   }
 
   /**
-   * arrayの中の最大値のインデックスを返します。
-   * @param {number[]} array 
+   * objの中の最大値のキーを返します。
+   * 配列にもMapインスタンスにも使えます。
+   * @param {Object} obj 
    */
-  function argmax(array) {
+  function argmax(obj) {
       let maxIndex;
       let maxValue = -Infinity;
-      for (const [i, v] of array.entries()) {
+      for (const [i, v] of obj.entries()) {
           if (v > maxValue) {
               maxIndex = i;
               maxValue = v;
