@@ -1065,7 +1065,7 @@
               if (c === IntersectionState.EMPTY || c === opponent) { // ポン抜きの形でなければ
                   return false;
               }
-              if (c === IntersectionState.pl && this.sg[this.id[nv]].getLibCnt() === 1) { // ポン抜きの形を作る石のどれかがアタリなら
+              if (c === pl && this.sg[this.id[nv]].getLibCnt() === 1) { // ポン抜きの形を作る石のどれかがアタリなら
                   return false;
               }
           }
@@ -1122,6 +1122,7 @@
 
       /**
        * 眼形を潰さないようにランダムに着手します。
+       * @returns {Uint16}
        */
       randomPlay() {
           const emptyList = [];
