@@ -709,8 +709,7 @@
   function argmax(array) {
       let maxIndex;
       let maxValue = -Infinity;
-      for (let i = 0; i < array.length; i++) {
-          const v = array[i];
+      for (const [i, v] of array.entries()) {
           if (v > maxValue) {
               maxIndex = i;
               maxValue = v;
