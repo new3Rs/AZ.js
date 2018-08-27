@@ -945,7 +945,7 @@
        */
       remove(v) {
           let vTmp = v;
-          while (true) {
+          do {
               this.removeCnt += 1;
               this.state[vTmp] = IntersectionState.EMPTY;
               this.id[vTmp] = vTmp;
@@ -955,10 +955,7 @@
               const vNext = this.next[vTmp];
               this.next[vTmp] = vTmp;
               vTmp = vNext;
-              if (vTmp === v) {
-                  break;
-              }
-          }
+          } while (vTmp !== v);
       }
 
       /**
