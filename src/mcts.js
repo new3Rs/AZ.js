@@ -46,7 +46,6 @@ class Node {
         this.totalCount = 0;
         this.hash = 0;
         this.moveNumber = -1;
-        this.exitCondition = null;
         this.sortedIndices = null;
         this.clear();
     }
@@ -141,6 +140,7 @@ export class MCTS {
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
+        this.exitCondition = null;
         if (evaluatePlugin instanceof Function) {
             this.evaluatePlugin = evaluatePlugin;
         }
@@ -255,6 +255,7 @@ export class MCTS {
      * 検索するかどうかを決定します。
      * @param {Integer} best 
      * @param {Integer} second 
+     * @returns {bool}
      */
     shouldSearch(best, second) {
         const node = this.nodes[this.rootId];

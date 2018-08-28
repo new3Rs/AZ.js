@@ -1388,7 +1388,6 @@
           this.totalCount = 0;
           this.hash = 0;
           this.moveNumber = -1;
-          this.exitCondition = null;
           this.sortedIndices = null;
           this.clear();
       }
@@ -1483,6 +1482,7 @@
           this.evalCount = 0;
           this.nn = nn;
           this.terminateFlag = false;
+          this.exitCondition = null;
           if (evaluatePlugin instanceof Function) {
               this.evaluatePlugin = evaluatePlugin;
           }
@@ -1597,6 +1597,7 @@
        * 検索するかどうかを決定します。
        * @param {Integer} best 
        * @param {Integer} second 
+       * @returns {bool}
        */
       shouldSearch(best, second) {
           const node = this.nodes[this.rootId];
