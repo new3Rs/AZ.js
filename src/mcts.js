@@ -484,7 +484,7 @@ export class MCTS {
         if (rootNode.edgeLength <= 1) { // 候補手がパスしかなければ
             console.log('\nmove number=%d:', this.rootMoveNumber + 1);
             this.printInfo(this.rootId, b.C);
-            return [b.C.PASS, 0.5];
+            return rootNode;
         }
 
         this.cleanupNodes();
