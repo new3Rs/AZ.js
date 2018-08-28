@@ -208,7 +208,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line120">line 120</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line121">line 121</a>
     </li></ul></dd>
     
 
@@ -314,7 +314,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line217">line 217</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line218">line 218</a>
     </li></ul></dd>
     
 
@@ -401,7 +401,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line172">line 172</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line173">line 173</a>
     </li></ul></dd>
     
 
@@ -559,7 +559,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line190">line 190</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line191">line 191</a>
     </li></ul></dd>
     
 
@@ -751,7 +751,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line369">line 369</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line370">line 370</a>
     </li></ul></dd>
     
 
@@ -855,7 +855,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line272">line 272</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line273">line 273</a>
     </li></ul></dd>
     
 
@@ -911,7 +911,7 @@
     
 
     
-    <h4 class="name" id="hasEdgeNode"><span class="type-signature"></span>hasEdgeNode<span class="signature">(nodeId, edgeIndex, moveNumber)</span><span class="type-signature"> &rarr; {bool}</span></h4>
+    <h4 class="name" id="hasEdgeNode"><span class="type-signature"></span>hasEdgeNode<span class="signature">(edgeIndex, nodeId, moveNumber)</span><span class="type-signature"> &rarr; {bool}</span></h4>
     
 
     
@@ -955,7 +955,7 @@
 
         <tr>
             
-                <td class="name"><code>nodeId</code></td>
+                <td class="name"><code>edgeIndex</code></td>
             
 
             <td class="type">
@@ -978,7 +978,7 @@
 
         <tr>
             
-                <td class="name"><code>edgeIndex</code></td>
+                <td class="name"><code>nodeId</code></td>
             
 
             <td class="type">
@@ -1058,7 +1058,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line291">line 291</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line292">line 292</a>
     </li></ul></dd>
     
 
@@ -1234,7 +1234,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line337">line 337</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line338">line 338</a>
     </li></ul></dd>
     
 
@@ -1439,7 +1439,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line477">line 477</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line479">line 479</a>
     </li></ul></dd>
     
 
@@ -1495,7 +1495,7 @@
     
 
     
-    <h4 class="name" id="selectByUCB"><span class="type-signature"></span>selectByUCB<span class="signature">(b, nodeId)</span><span class="type-signature"> &rarr; {Array}</span></h4>
+    <h4 class="name" id="selectByUCB"><span class="type-signature"></span>selectByUCB<span class="signature">(b, node)</span><span class="type-signature"> &rarr; {Array}</span></h4>
     
 
     
@@ -1562,13 +1562,13 @@
 
         <tr>
             
-                <td class="name"><code>nodeId</code></td>
+                <td class="name"><code>node</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Integer</span>
+<span class="param-type"><a href="Node.html">Node</a></span>
 
 
             
@@ -1619,7 +1619,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line236">line 236</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line237">line 237</a>
     </li></ul></dd>
     
 
@@ -1776,7 +1776,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line164">line 164</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line165">line 165</a>
     </li></ul></dd>
     
 
@@ -1935,7 +1935,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line154">line 154</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line155">line 155</a>
     </li></ul></dd>
     
 
@@ -2093,7 +2093,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line258">line 258</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line259">line 259</a>
     </li></ul></dd>
     
 
@@ -2179,7 +2179,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line516">line 516</a>
+        <a href="mcts.js.html">mcts.js</a>, <a href="mcts.js.html#line518">line 518</a>
     </li></ul></dd>
     
 
@@ -2229,7 +2229,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Aug 27 2018 16:58:09 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Aug 28 2018 10:50:01 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

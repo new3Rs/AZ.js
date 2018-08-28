@@ -47,6 +47,7 @@ class Node {
         this.hash = 0;
         this.moveNumber = -1;
         this.exitCondition = null;
+        this.sortedIndices = null;
         this.clear();
     }
 
@@ -64,7 +65,7 @@ class Node {
      * 初期化します。
      * @param {Integer} hash 現局面のハッシュです。
      * @param {Integer} moveNumber 現局面の手数です。
-     * @param {object} candidates Boardが生成する候補手情報です。
+     * @param {UInt16[]} candidates Boardが生成する候補手情報です。
      * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
      */
     initialize(hash, moveNumber, candidates, prob) {
@@ -230,7 +231,7 @@ export class MCTS {
     /**
      * UCB評価で最善の着手情報を返します。
      * @param {Board} b 
-     * @param {Integer} nodeId 
+     * @param {Node} node 
      * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
      */
     selectByUCB(b, node) {
@@ -283,8 +284,8 @@ export class MCTS {
 
     /**
      * nodeIdのノードのedgeIndexのエッジに対応するノードが既に存在するか返します。
-     * @param {Integer} nodeId 
      * @param {Integer} edgeIndex 
+     * @param {Integer} nodeId 
      * @param {Integer} moveNumber 
      * @returns {bool}
      */
@@ -378,6 +379,7 @@ export class MCTS {
      * 検索の前処理です。
      * @private
      * @param {Board} b 
+     * @returns {Node}
      */
     async prepareRootNode(b) {
         const hash = b.hash();
@@ -387,7 +389,6 @@ export class MCTS {
             this.nodes[this.nodeHashes.get(hash)].hash === hash &&
             this.nodes[this.nodeHashes.get(hash)].moveNumber === this.rootMoveNumber) {
                 this.rootId = this.nodeHashes.get(hash);
-
         } else {
             const [prob] = await this.evaluate(b);
             this.rootId = this.createNode(b, prob);
@@ -426,6 +427,7 @@ export class MCTS {
      * @private
      * @param {Board} b 
      * @param {Integer} nodeId
+     * @returns {number} バリュー
      */
     async playout(b, nodeId) {
         const node = this.nodes[nodeId];

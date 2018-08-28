@@ -1271,14 +1271,14 @@
        */
       finalScore() {
           const ROLL_OUT_NUM = 256;
-          const doubleScoreList = [];
+          const scores = [];
           let bCpy = new Board(this.C, this.komi);
           for (let i = 0; i < ROLL_OUT_NUM; i++) {
               this.copyTo(bCpy);
               bCpy.rollout(false);
-              doubleScoreList.push(bCpy.score());
+              scores.push(bCpy.score());
           }
-          return mostCommon(doubleScoreList);
+          return mostCommon(scores);
       }
   }
 
@@ -1389,6 +1389,7 @@
           this.hash = 0;
           this.moveNumber = -1;
           this.exitCondition = null;
+          this.sortedIndices = null;
           this.clear();
       }
 
@@ -1406,7 +1407,7 @@
        * 初期化します。
        * @param {Integer} hash 現局面のハッシュです。
        * @param {Integer} moveNumber 現局面の手数です。
-       * @param {object} candidates Boardが生成する候補手情報です。
+       * @param {UInt16[]} candidates Boardが生成する候補手情報です。
        * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
        */
       initialize(hash$$1, moveNumber, candidates, prob) {
@@ -1572,7 +1573,7 @@
       /**
        * UCB評価で最善の着手情報を返します。
        * @param {Board} b 
-       * @param {Integer} nodeId 
+       * @param {Node} node 
        * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
        */
       selectByUCB(b, node) {
@@ -1625,8 +1626,8 @@
 
       /**
        * nodeIdのノードのedgeIndexのエッジに対応するノードが既に存在するか返します。
-       * @param {Integer} nodeId 
        * @param {Integer} edgeIndex 
+       * @param {Integer} nodeId 
        * @param {Integer} moveNumber 
        * @returns {bool}
        */
@@ -1720,6 +1721,7 @@
        * 検索の前処理です。
        * @private
        * @param {Board} b 
+       * @returns {Node}
        */
       async prepareRootNode(b) {
           const hash$$1 = b.hash();
@@ -1729,7 +1731,6 @@
               this.nodes[this.nodeHashes.get(hash$$1)].hash === hash$$1 &&
               this.nodes[this.nodeHashes.get(hash$$1)].moveNumber === this.rootMoveNumber) {
                   this.rootId = this.nodeHashes.get(hash$$1);
-
           } else {
               const [prob] = await this.evaluate(b);
               this.rootId = this.createNode(b, prob);
@@ -1768,6 +1769,7 @@
        * @private
        * @param {Board} b 
        * @param {Integer} nodeId
+       * @returns {number} バリュー
        */
       async playout(b, nodeId) {
           const node = this.nodes[nodeId];

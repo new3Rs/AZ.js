@@ -450,14 +450,14 @@ class BaseBoard {
      */
     finalScore() {
         const ROLL_OUT_NUM = 256;
-        const doubleScoreList = [];
+        const scores = [];
         let bCpy = new Board(this.C, this.komi);
         for (let i = 0; i < ROLL_OUT_NUM; i++) {
             this.copyTo(bCpy);
             bCpy.rollout(false);
-            doubleScoreList.push(bCpy.score());
+            scores.push(bCpy.score());
         }
-        return mostCommon(doubleScoreList);
+        return mostCommon(scores);
     }
 }
 
