@@ -220,8 +220,8 @@ export class MCTS {
             return;
         }
         for (let i = 0; i < NODES_MAX_LENGTH; i++) {
-            const mc = this.nodes[i].moveNumber;
-            if (mc != null && mc < this.rootMoveNumber) {
+            const mn = this.nodes[i].moveNumber;
+            if (mn >= 0 && mn < this.rootMoveNumber) {
                 this.nodeHashes.delete(this.nodes[i].hash);
                 this.nodes[i].clear();
             }
