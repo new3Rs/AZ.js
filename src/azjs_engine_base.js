@@ -120,7 +120,7 @@ export class AZjsEngineBase {
                 const winrates = indices.map(e => [e, node.winrate(e)]);
                 winrates.sort((a, b) => b[1] - a[1]);
                 const i = winrates.findIndex(e => e[1] < 0.5);
-                const e = winrates[i < 0 ? winrates.length - 1 : i === 0 ? 0 : i - 1];
+                const e = winrates[i < 0 ? winrates.length - 1 : Math.max(i - 1, 0)];
                 return [node.moves[e[0]], e[1]];
             }
             case SearchMode.EASY: {
