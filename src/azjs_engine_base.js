@@ -79,12 +79,8 @@ export class AZjsEngineBase {
         if (winRate < 0.01) {
             return ['resign', winRate];
         }
-        if (this.b.play(move)) {
-            return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
-        }
-        this.b.showboard();
-        console.log(this.b.candidates());
-        throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
+        this.b.play(move);
+        return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
     }
 
     /**
@@ -92,6 +88,7 @@ export class AZjsEngineBase {
      * (x, y)は左上が1-オリジンの2次元座標です。
      * @param {Integer} x 
      * @param {Integer} y 
+     * @throws {Error}
      */
     play(x, y) {
         this.b.play(this.b.C.xy2ev(x, y));

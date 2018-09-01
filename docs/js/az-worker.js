@@ -930,6 +930,7 @@
       /**
        * 拡張線形座標の配列を受け取って順に着手します。
        * @param {Uin16[]} sequence 
+       * @throws {Error}
        */
       playSequence(sequence) {
           for (const v of sequence) {
@@ -1089,13 +1090,14 @@
        * 交点vに着手します。
        * @param {*} v 拡張線形座標
        * @param {*} notFillEye 眼を潰すことを許可しない
+       * @throws {Error}
        */
       play(v, notFillEye = false) {
           if (!this.legal(v)) {
-              return false;
+              throw new Error('illegal move');
           }
           if (notFillEye && this.eyeshape(v, this.turn)) {
-              return false;
+              throw new Error('eye-fill move');
           }
           for (let i = KEEP_PREV_CNT - 2; i >= 0; i--) {
               this.prevState[i + 1] = this.prevState[i];
@@ -1116,7 +1118,6 @@
           this.turn = IntersectionState.opponentOf(this.turn);
           this.moveNumber += 1;
           this.hashValue ^= this.C.ZobristHashes[v];
-          return true;
       }
 
       /**
@@ -1132,11 +1133,12 @@
           }
           shuffle(emptyList);
           for (const v of emptyList) {
-              if (this.play(v, true)) {
+              try {
+                  this.play(v, true);
                   return v;
-              }
+              } catch (e) {}
           }
-          this.play(this.C.PASS, true);
+          this.play(this.C.PASS);
           return this.C.PASS;
       }
 
@@ -1960,12 +1962,8 @@
           if (winRate < 0.01) {
               return ['resign', winRate];
           }
-          if (this.b.play(move)) {
-              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
-          }
-          this.b.showboard();
-          console.log(this.b.candidates());
-          throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
+          this.b.play(move);
+          return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
       }
 
       /**
@@ -1973,6 +1971,7 @@
        * (x, y)は左上が1-オリジンの2次元座標です。
        * @param {Integer} x 
        * @param {Integer} y 
+       * @throws {Error}
        */
       play(x, y) {
           this.b.play(this.b.C.xy2ev(x, y));

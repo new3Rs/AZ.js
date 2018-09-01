@@ -112,6 +112,7 @@ class BaseBoard {
     /**
      * 拡張線形座標の配列を受け取って順に着手します。
      * @param {Uin16[]} sequence 
+     * @throws {Error}
      */
     playSequence(sequence) {
         for (const v of sequence) {
@@ -271,13 +272,14 @@ class BaseBoard {
      * 交点vに着手します。
      * @param {*} v 拡張線形座標
      * @param {*} notFillEye 眼を潰すことを許可しない
+     * @throws {Error}
      */
     play(v, notFillEye = false) {
         if (!this.legal(v)) {
-            return false;
+            throw new Error('illegal move');
         }
         if (notFillEye && this.eyeshape(v, this.turn)) {
-            return false;
+            throw new Error('eye-fill move');
         }
         for (let i = KEEP_PREV_CNT - 2; i >= 0; i--) {
             this.prevState[i + 1] = this.prevState[i];
@@ -298,7 +300,6 @@ class BaseBoard {
         this.turn = IntersectionState.opponentOf(this.turn);
         this.moveNumber += 1;
         this.hashValue ^= this.C.ZobristHashes[v];
-        return true;
     }
 
     /**
@@ -314,11 +315,12 @@ class BaseBoard {
         }
         shuffle(emptyList);
         for (const v of emptyList) {
-            if (this.play(v, true)) {
+            try {
+                this.play(v, true);
                 return v;
-            }
+            } catch (e) {}
         }
-        this.play(this.C.PASS, true);
+        this.play(this.C.PASS);
         return this.C.PASS;
     }
 
