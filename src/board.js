@@ -55,7 +55,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
-        this.hashValue = 0x87654321;
+        this.hashValue = [0x12345678, 0x87654321];
         this.reset();
     }
 
@@ -299,7 +299,8 @@ class BaseBoard {
         this.history.push(v);
         this.turn = IntersectionState.opponentOf(this.turn);
         this.moveNumber += 1;
-        this.hashValue ^= this.C.ZobristHashes[v];
+        this.hashValue[0] ^= this.C.ZobristHashes[0][v];
+        this.hashValue[1] ^= this.C.ZobristHashes[1][v];
     }
 
     /**

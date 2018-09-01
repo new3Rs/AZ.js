@@ -115,3 +115,72 @@ export function printProb(prob, size) {
 export function random(min = -0x80000000, max = 0x7FFFFFFF) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+/** 2要素配列をキーとするMapクラスです */
+export class TwoKeyMap {
+    constructor() {
+        this.map = new Map();
+    }
+    get size() {
+        let result = 0;
+        for (const e of this.map.values) {
+            result += e.size;
+        }
+        return result;
+    }
+    clear() {
+        this.map.clear();
+    }
+    delete(key) {
+        const map = this.map.get(key[0]);
+        if (map == null) {
+            return false;
+        }
+        return map.delete(key[1]);
+    }
+    entries() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const k0 of this.map.keys()) {
+            for (const e of this.map.get(k0).entries()) {
+                result.push([[k0, e[0]], e[1]]);
+            }
+        }
+        return result;
+    }
+    get(key) {
+        const map = this.map.get(key[0]);
+        return map == null ? undefined : map.get(key[1]);
+    }
+    has(key) {
+        return this.map.has(key[0]) && this.map.get(key[0]).has(key[1]);
+    }
+    keys() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const k0 of this.map.keys()) {
+            for (const k1 of this.map.get(k0).keys()) {
+                result.push([k0, k1]);
+            }
+        }
+        return result;
+    }
+    set(key, value) {
+        let map = this.map.get(key[0]);
+        if (map == null) {
+            map = new Map();
+            this.map.set(key[0], map);
+        }
+        map.set(key[1], value);
+    }
+    values() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const map of this.map.values()) {
+            for (const v of map.values()) {
+                result.push(v);
+            }
+        }
+        return result;
+    }
+}

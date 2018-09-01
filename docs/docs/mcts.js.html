@@ -36,7 +36,8 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT
  */
-import { argsort, argmax, printProb } from './utils.js';
+import { argsort, argmax, printProb, TwoKeyMap } from './utils.js';
+import { IntersectionState } from './board_constants.js';
 import { Board } from './board.js';
 
 const NODES_MAX_LENGTH = 16384;
@@ -97,7 +98,7 @@ class Node {
      */
     initialize(hash, moveNumber, candidates, prob) {
         this.clear();
-        this.hash = hash;
+        this.hash = hash.slice();
         this.moveNumber = moveNumber;
 
         for (const rv of argsort(prob, true)) {
@@ -164,7 +165,7 @@ export class MCTS {
         }
         this.rootId = 0;
         this.rootMoveNumber = 0;
-        this.nodeHashes = new Map();
+        this.nodeHashes = new TwoKeyMap();
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
@@ -221,13 +222,14 @@ export class MCTS {
         const hash = b.hash();
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
-            if (this.nodes[id].hash === hash &amp;&amp;
+            if (this.nodes[id].hash[0] === hash[0] &amp;&amp;
+                this.nodes[id].hash[1] === hash[1] &amp;&amp;
                 this.nodes[id].moveNumber === b.moveNumber) {
                 return id;
             }
         }
 
-        let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
+        let nodeId = Math.abs(hash[0]) % NODES_MAX_LENGTH;
         while (this.nodes[nodeId].moveNumber !== -1) {
             nodeId = nodeId + 1 &lt; NODES_MAX_LENGTH ? nodeId + 1 : 0;
         }
@@ -444,6 +446,16 @@ export class MCTS {
             this.cleanupNodes();
         }
         const nodeId = this.createNode(b, prob);
+        /*
+        if (!this.isConsistentNode(nodeId, b)) {
+            const node = this.nodes[nodeId];
+            for (let i = 0; i &lt; node.edgeLength; i++) {
+                console.log(b.C.ev2str(node.moves[i]));
+            }
+            b.showboard();
+            throw new Error('inconsistent node');
+        }
+        */
         parentNode.nodeIds[edgeIndex] = nodeId;
         parentNode.hashes[edgeIndex] = b.hash();
         parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
@@ -547,6 +559,26 @@ export class MCTS {
     stop() {
         this.terminateFlag = true;
     }
+
+    /**
+     * 
+     * @param {Integer} nodeId
+     * @param {Board} b 
+     */
+    isConsistentNode(nodeId, b) {
+        const node = this.nodes[nodeId];
+        for (let i = 0; i &lt; node.edgeLength; i++) {
+            const ev = node.moves[i];
+            if (ev === b.C.EBVCNT) {
+                continue
+            }
+            if (b.state[ev] !== IntersectionState.EMPTY) {
+                console.log('isConsistentNode', b.C.ev2str(ev));
+                return false;
+            }
+        }
+        return true
+    }
 }
 </code></pre>
         </article>
@@ -558,13 +590,13 @@ export class MCTS {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#IntersectionState">IntersectionState</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#SearchMode">SearchMode</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li><li><a href="global.html#X_LABELS">X_LABELS</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li><li><a href="TwoKeyMap.html">TwoKeyMap</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#IntersectionState">IntersectionState</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#SearchMode">SearchMode</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li><li><a href="global.html#X_LABELS">X_LABELS</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Sep 01 2018 16:20:18 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Sep 01 2018 21:11:16 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

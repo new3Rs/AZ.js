@@ -142,6 +142,75 @@ export function printProb(prob, size) {
  */
 export function random(min = -0x80000000, max = 0x7FFFFFFF) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/** 2要素配列をキーとするMapクラスです */
+export class TwoKeyMap {
+    constructor() {
+        this.map = new Map();
+    }
+    get size() {
+        let result = 0;
+        for (const e of this.map.values) {
+            result += e.size;
+        }
+        return result;
+    }
+    clear() {
+        this.map.clear();
+    }
+    delete(key) {
+        const map = this.map.get(key[0]);
+        if (map == null) {
+            return false;
+        }
+        return map.delete(key[1]);
+    }
+    entries() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const k0 of this.map.keys()) {
+            for (const e of this.map.get(k0).entries()) {
+                result.push([[k0, e[0]], e[1]]);
+            }
+        }
+        return result;
+    }
+    get(key) {
+        const map = this.map.get(key[0]);
+        return map == null ? undefined : map.get(key[1]);
+    }
+    has(key) {
+        return this.map.has(key[0]) &amp;&amp; this.map.get(key[0]).has(key[1]);
+    }
+    keys() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const k0 of this.map.keys()) {
+            for (const k1 of this.map.get(k0).keys()) {
+                result.push([k0, k1]);
+            }
+        }
+        return result;
+    }
+    set(key, value) {
+        let map = this.map.get(key[0]);
+        if (map == null) {
+            map = new Map();
+            this.map.set(key[0], map);
+        }
+        map.set(key[1], value);
+    }
+    values() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const map of this.map.values()) {
+            for (const v of map.values()) {
+                result.push(v);
+            }
+        }
+        return result;
+    }
 }</code></pre>
         </article>
     </section>
@@ -152,13 +221,13 @@ export function random(min = -0x80000000, max = 0x7FFFFFFF) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#IntersectionState">IntersectionState</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#SearchMode">SearchMode</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li><li><a href="global.html#X_LABELS">X_LABELS</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AZjsEngine.html">AZjsEngine</a></li><li><a href="AZjsEngineBase.html">AZjsEngineBase</a></li><li><a href="AZjsEngineRMI.html">AZjsEngineRMI</a></li><li><a href="BaseBoard.html">BaseBoard</a></li><li><a href="Board.html">Board</a></li><li><a href="BoardConstants.html">BoardConstants</a></li><li><a href="BoardController.html">BoardController</a></li><li><a href="MCTS.html">MCTS</a></li><li><a href="NeuralNetwork.html">NeuralNetwork</a></li><li><a href="NeuralNetworkRMI.html">NeuralNetworkRMI</a></li><li><a href="Node.html">Node</a></li><li><a href="PlayController.html">PlayController</a></li><li><a href="StoneGroup.html">StoneGroup</a></li><li><a href="TwoKeyMap.html">TwoKeyMap</a></li></ul><h3>Global</h3><ul><li><a href="global.html#argmax">argmax</a></li><li><a href="global.html#argsort">argsort</a></li><li><a href="global.html#evaluatePlugin">evaluatePlugin</a></li><li><a href="global.html#featureIndex">featureIndex</a></li><li><a href="global.html#i18nSpeak">i18nSpeak</a></li><li><a href="global.html#IntersectionState">IntersectionState</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mostCommon">mostCommon</a></li><li><a href="global.html#random">random</a></li><li><a href="global.html#SearchMode">SearchMode</a></li><li><a href="global.html#setLoadingBar">setLoadingBar</a></li><li><a href="global.html#shuffle">shuffle</a></li><li><a href="global.html#softmax">softmax</a></li><li><a href="global.html#speak">speak</a></li><li><a href="global.html#startGame">startGame</a></li><li><a href="global.html#X_LABELS">X_LABELS</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Sep 01 2018 16:20:18 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Sep 01 2018 21:11:16 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>

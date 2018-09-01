@@ -488,6 +488,75 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  /** 2要素配列をキーとするMapクラスです */
+  class TwoKeyMap {
+      constructor() {
+          this.map = new Map();
+      }
+      get size() {
+          let result = 0;
+          for (const e of this.map.values) {
+              result += e.size;
+          }
+          return result;
+      }
+      clear() {
+          this.map.clear();
+      }
+      delete(key) {
+          const map = this.map.get(key[0]);
+          if (map == null) {
+              return false;
+          }
+          return map.delete(key[1]);
+      }
+      entries() {
+          /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+          const result = [];
+          for (const k0 of this.map.keys()) {
+              for (const e of this.map.get(k0).entries()) {
+                  result.push([[k0, e[0]], e[1]]);
+              }
+          }
+          return result;
+      }
+      get(key) {
+          const map = this.map.get(key[0]);
+          return map == null ? undefined : map.get(key[1]);
+      }
+      has(key) {
+          return this.map.has(key[0]) && this.map.get(key[0]).has(key[1]);
+      }
+      keys() {
+          /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+          const result = [];
+          for (const k0 of this.map.keys()) {
+              for (const k1 of this.map.get(k0).keys()) {
+                  result.push([k0, k1]);
+              }
+          }
+          return result;
+      }
+      set(key, value) {
+          let map = this.map.get(key[0]);
+          if (map == null) {
+              map = new Map();
+              this.map.set(key[0], map);
+          }
+          map.set(key[1], value);
+      }
+      values() {
+          /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+          const result = [];
+          for (const map of this.map.values()) {
+              for (const v of map.values()) {
+                  result.push(v);
+              }
+          }
+          return result;
+      }
+  }
+
   /**
    * @file 碁盤の定数クラスです
    */
@@ -558,7 +627,7 @@
           this.VNULL = this.EBVCNT + 1;
           this.BVCNT = this.BSIZE * this.BSIZE;
           this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
-          this.ZobristHashes = new Int32Array(this.EBVCNT + 1);
+          this.ZobristHashes = [new Int32Array(this.EBVCNT + 1), new Int32Array(this.EBVCNT + 1)];
           this.initializeSymmetricRawVertex();
           this.initializeZobristHashes();
           Object.freeze(this);
@@ -720,8 +789,11 @@
       }
 
       initializeZobristHashes() {
-          for (let i = 0; i < this.ZobristHashes.length; i++) {
-              this.ZobristHashes[i] = random();
+          for (let j = 0; j < this.ZobristHashes.length; j++) {
+              const hashes = this.ZobristHashes[j];
+              for (let i = 0; i < hashes.length; i++) {
+                  hashes[i] = random();
+              }
           }
       }
   }
@@ -874,7 +946,7 @@
           this.prevMove = this.C.VNULL;
           this.removeCnt = 0;
           this.history = [];
-          this.hashValue = 0x87654321;
+          this.hashValue = [0x12345678, 0x87654321];
           this.reset();
       }
 
@@ -1118,7 +1190,8 @@
           this.history.push(v);
           this.turn = IntersectionState.opponentOf(this.turn);
           this.moveNumber += 1;
-          this.hashValue ^= this.C.ZobristHashes[v];
+          this.hashValue[0] ^= this.C.ZobristHashes[0][v];
+          this.hashValue[1] ^= this.C.ZobristHashes[1][v];
       }
 
       /**
@@ -1413,7 +1486,7 @@
        */
       initialize(hash, moveNumber, candidates, prob) {
           this.clear();
-          this.hash = hash;
+          this.hash = hash.slice();
           this.moveNumber = moveNumber;
 
           for (const rv of argsort(prob, true)) {
@@ -1480,7 +1553,7 @@
           }
           this.rootId = 0;
           this.rootMoveNumber = 0;
-          this.nodeHashes = new Map();
+          this.nodeHashes = new TwoKeyMap();
           this.evalCount = 0;
           this.nn = nn;
           this.terminateFlag = false;
@@ -1537,13 +1610,14 @@
           const hash = b.hash();
           if (this.nodeHashes.has(hash)) {
               const id = this.nodeHashes.get(hash);
-              if (this.nodes[id].hash === hash &&
+              if (this.nodes[id].hash[0] === hash[0] &&
+                  this.nodes[id].hash[1] === hash[1] &&
                   this.nodes[id].moveNumber === b.moveNumber) {
                   return id;
               }
           }
 
-          let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
+          let nodeId = Math.abs(hash[0]) % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
               nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
           }
@@ -1760,6 +1834,7 @@
               this.cleanupNodes();
           }
           const nodeId = this.createNode(b, prob);
+          /*
           if (!this.isConsistentNode(nodeId, b)) {
               const node = this.nodes[nodeId];
               for (let i = 0; i < node.edgeLength; i++) {
@@ -1768,6 +1843,7 @@
               b.showboard();
               throw new Error('inconsistent node');
           }
+          */
           parentNode.nodeIds[edgeIndex] = nodeId;
           parentNode.hashes[edgeIndex] = b.hash();
           parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
