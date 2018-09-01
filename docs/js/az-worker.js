@@ -360,6 +360,7 @@
                   message.result = result;
                   this.workerRMI.target.postMessage(message, getTransferList(result));
               } catch (e) {
+                  console.error(e);
                   message.error = e.toString();
                   this.workerRMI.target.postMessage(message);
               }
@@ -1759,6 +1760,14 @@
               this.cleanupNodes();
           }
           const nodeId = this.createNode(b, prob);
+          if (!this.isConsistentNode(nodeId, b)) {
+              const node = this.nodes[nodeId];
+              for (let i = 0; i < node.edgeLength; i++) {
+                  console.log(b.C.ev2str(node.moves[i]));
+              }
+              b.showboard();
+              throw new Error('inconsistent node');
+          }
           parentNode.nodeIds[edgeIndex] = nodeId;
           parentNode.hashes[edgeIndex] = b.hash();
           parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
@@ -1862,6 +1871,26 @@
       stop() {
           this.terminateFlag = true;
       }
+
+      /**
+       * 
+       * @param {Integer} nodeId
+       * @param {Board} b 
+       */
+      isConsistentNode(nodeId, b) {
+          const node = this.nodes[nodeId];
+          for (let i = 0; i < node.edgeLength; i++) {
+              const ev = node.moves[i];
+              if (ev === b.C.EBVCNT) {
+                  continue
+              }
+              if (b.state[ev] !== IntersectionState.EMPTY) {
+                  console.log('isConsistentNode', b.C.ev2str(ev));
+                  return false;
+              }
+          }
+          return true
+      }
   }
 
   /**
@@ -1962,8 +1991,14 @@
           if (winRate < 0.01) {
               return ['resign', winRate];
           }
-          this.b.play(move);
-          return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+          try {
+              this.b.play(move);
+              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+          } catch (e) {
+              this.b.showboard();
+              console.log(this.b.candidates());
+              throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
+          }
       }
 
       /**

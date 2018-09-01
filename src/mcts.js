@@ -9,6 +9,7 @@
  * @license MIT
  */
 import { argsort, argmax, printProb } from './utils.js';
+import { IntersectionState } from './board_constants.js';
 import { Board } from './board.js';
 
 const NODES_MAX_LENGTH = 16384;
@@ -416,6 +417,14 @@ export class MCTS {
             this.cleanupNodes();
         }
         const nodeId = this.createNode(b, prob);
+        if (!this.isConsistentNode(nodeId, b)) {
+            const node = this.nodes[nodeId];
+            for (let i = 0; i < node.edgeLength; i++) {
+                console.log(b.C.ev2str(node.moves[i]));
+            }
+            b.showboard();
+            throw new Error('inconsistent node');
+        }
         parentNode.nodeIds[edgeIndex] = nodeId;
         parentNode.hashes[edgeIndex] = b.hash();
         parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
@@ -518,5 +527,25 @@ export class MCTS {
      */
     stop() {
         this.terminateFlag = true;
+    }
+
+    /**
+     * 
+     * @param {Integer} nodeId
+     * @param {Board} b 
+     */
+    isConsistentNode(nodeId, b) {
+        const node = this.nodes[nodeId];
+        for (let i = 0; i < node.edgeLength; i++) {
+            const ev = node.moves[i];
+            if (ev === b.C.EBVCNT) {
+                continue
+            }
+            if (b.state[ev] !== IntersectionState.EMPTY) {
+                console.log('isConsistentNode', b.C.ev2str(ev));
+                return false;
+            }
+        }
+        return true
     }
 }

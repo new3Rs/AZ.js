@@ -5,7 +5,7 @@
   "author": "ICHIKAWA, Yuji",
   "license": "MIT",
   "dependencies": {
-    "worker-rmi": "^1.0.7"
+    "worker-rmi": "^1.0.8"
   },
   "devDependencies": {
     "babel-preset-import-export": "^1.0.2",

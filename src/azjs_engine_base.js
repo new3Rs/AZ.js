@@ -79,8 +79,14 @@ export class AZjsEngineBase {
         if (winRate < 0.01) {
             return ['resign', winRate];
         }
-        this.b.play(move);
-        return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+        try {
+            this.b.play(move);
+            return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+        } catch (e) {
+            this.b.showboard();
+            console.log(this.b.candidates());
+            throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
+        }
     }
 
     /**
