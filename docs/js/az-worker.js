@@ -1456,7 +1456,7 @@
           /** moves要素に対応するノードIDです。 */
           this.nodeIds = new Int16Array(this.C.BVCNT + 1);
           /** moves要素に対応するハッシュです。 */
-          this.hashes = new Int32Array(this.C.BVCNT + 1);
+          this.hashes = new Int32Array(2 * (this.C.BVCNT + 1));
           /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
           this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
           this.totalValue = 0.0;
@@ -1497,11 +1497,20 @@
                   this.totalActionValues[this.edgeLength] = 0.0;
                   this.visitCounts[this.edgeLength] = 0;
                   this.nodeIds[this.edgeLength] = -1;
-                  this.hashes[this.edgeLength] = 0;
+                  this.setHashes(this.edgeLength, [0, 0]);
                   this.evaluated[this.edgeLength] = false;
                   this.edgeLength += 1;
               }
           }
+      }
+
+      getHashes(index) {
+          return [this.hashes[2 * index], this.hashes[2 * index + 1]];
+      }
+
+      setHashes(index, hash) {
+          this.hashes[2 * index] = hash[0];
+          this.hashes[2 * index + 1] = hash[1];
       }
 
       /**
@@ -1711,8 +1720,13 @@
       hasEdgeNode(edgeIndex, nodeId, moveNumber) {
           const node = this.nodes[nodeId];
           const edgeId = node.nodeIds[edgeIndex];
-          return edgeId >= 0 &&
-              node.hashes[edgeIndex] === this.nodes[edgeId].hash &&
+          if (edgeId < 0) {
+              return false;
+          }
+          const edgeIndexHash = node.getHashes(edgeIndex);
+          const edgeIdHash = this.nodes[edgeId].hash;
+          return edgeIndexHash[0] === edgeIdHash[0] &&
+              edgeIndexHash[1] === edgeIdHash[1] &&
               this.nodes[edgeId].moveNumber === moveNumber;
       }
 
@@ -1845,7 +1859,7 @@
           }
           */
           parentNode.nodeIds[edgeIndex] = nodeId;
-          parentNode.hashes[edgeIndex] = b.hash();
+          parentNode.setHashes(edgeIndex, b.hash());
           parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
           parentNode.totalCount += parentNode.visitCounts[edgeIndex];
           return value;
