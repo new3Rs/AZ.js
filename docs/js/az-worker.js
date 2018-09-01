@@ -405,12 +405,90 @@
   }
 
   /**
-   * @file 碁盤の定数クラスです
+   * @file 各種ユーティリティ関数群です。
    */
   /*
-   * @author 市川雄二 
+   * @author 市川雄二
    * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
    * @license MIT
+   */
+
+  /**
+   * @param {Array} array
+   */
+  function shuffle(array) {
+      let n = array.length;
+      let t;
+      let i;
+
+      while (n) {
+          i = Math.floor(Math.random() * n--);
+          t = array[n];
+          array[n] = array[i];
+          array[i] = t;
+      }
+
+      return array;
+  }
+
+  /**
+   * arrayの中の最頻出要素を返します。
+   * @param {Array} array 
+   */
+  function mostCommon(array) {
+      const map = new Map();
+      for (const e of array) {
+          if (map.has(e)) {
+              map.set(e, map.get(e) + 1);
+          } else {
+              map.set(e, 1);
+          }
+      }
+      return argmax(map);
+  }
+
+  /** arrayをソートした時のインデックス配列を返します。
+   * @param {number[]} array 
+   * @param {bool} reverse 
+   */
+  function argsort(array, reverse) {
+      const indices = Array.from(array).map((e, i) => i);
+      if (reverse) {
+          return indices.sort((a, b) => array[b] - array[a]);
+      } else {
+          return indices.sort((a, b) => array[a] - array[b]);
+      }
+  }
+
+  /**
+   * objの中の最大値のキーを返します。
+   * 配列にもMapインスタンスにも使えます。
+   * @param {Object} obj 
+   */
+  function argmax(obj) {
+      let maxIndex;
+      let maxValue = -Infinity;
+      for (const [i, v] of obj.entries()) {
+          if (v > maxValue) {
+              maxIndex = i;
+              maxValue = v;
+          }
+      }
+      return maxIndex;
+  }
+
+  /**
+   * 与えられた範囲の整数乱数を返します。
+   * 引数を省略すると符号付き32ビット整数の乱数を返します。
+   * @param {Integer} min
+   * @param {Integer} max
+   */
+  function random(min = -0x80000000, max = 0x7FFFFFFF) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  /**
+   * @file 碁盤の定数クラスです
    */
 
   /** x座標ラベル文字列です。 */
@@ -479,7 +557,9 @@
           this.VNULL = this.EBVCNT + 1;
           this.BVCNT = this.BSIZE * this.BSIZE;
           this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
+          this.ZobristHashes = new Int32Array(this.EBVCNT + 1);
           this.initializeSymmetricRawVertex();
+          this.initializeZobristHashes();
           Object.freeze(this);
       }
 
@@ -637,95 +717,12 @@
           }
           return x + center + (y + center) * this.BSIZE;
       }
-  }
 
-  /**
-   * @file 各種ユーティリティ関数群です。
-   */
-  /*
-   * @author 市川雄二
-   * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
-   * @license MIT
-   */
-
-  /**
-   * @param {Array} array
-   */
-  function shuffle(array) {
-      let n = array.length;
-      let t;
-      let i;
-
-      while (n) {
-          i = Math.floor(Math.random() * n--);
-          t = array[n];
-          array[n] = array[i];
-          array[i] = t;
-      }
-
-      return array;
-  }
-
-  /**
-   * arrayの中の最頻出要素を返します。
-   * @param {Array} array 
-   */
-  function mostCommon(array) {
-      const map = new Map();
-      for (const e of array) {
-          if (map.has(e)) {
-              map.set(e, map.get(e) + 1);
-          } else {
-              map.set(e, 1);
+      initializeZobristHashes() {
+          for (let i = 0; i < this.ZobristHashes.length; i++) {
+              this.ZobristHashes[i] = random();
           }
       }
-      return argmax(map);
-  }
-
-  /** arrayをソートした時のインデックス配列を返します。
-   * @param {number[]} array 
-   * @param {bool} reverse 
-   */
-  function argsort(array, reverse) {
-      const indices = Array.from(array).map((e, i) => i);
-      if (reverse) {
-          return indices.sort((a, b) => array[b] - array[a]);
-      } else {
-          return indices.sort((a, b) => array[a] - array[b]);
-      }
-  }
-
-  /**
-   * objの中の最大値のキーを返します。
-   * 配列にもMapインスタンスにも使えます。
-   * @param {Object} obj 
-   */
-  function argmax(obj) {
-      let maxIndex;
-      let maxValue = -Infinity;
-      for (const [i, v] of obj.entries()) {
-          if (v > maxValue) {
-              maxIndex = i;
-              maxValue = v;
-          }
-      }
-      return maxIndex;
-  }
-
-  /**
-   * strの32-bitハッシュ値を返します。
-   * (注)19路盤では32-bitハッシュ値は衝突すると言われていますが衝突には対応していません。
-   * @param {string} str 
-   * @returns {Integer}
-   */
-  function hash(str) {
-      let hash = 5381;
-      for (let i = 0; i < str.length; i++) {
-          const char = str.charCodeAt(i);
-          hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
-          hash = hash & hash; // Convert to 32bit integer
-      }
-      return Math.abs(hash);
   }
 
   /**
@@ -876,6 +873,7 @@
           this.prevMove = this.C.VNULL;
           this.removeCnt = 0;
           this.history = [];
+          this.hashValue = 0x87654321;
           this.reset();
       }
 
@@ -1117,6 +1115,7 @@
           this.history.push(v);
           this.turn = IntersectionState.opponentOf(this.turn);
           this.moveNumber += 1;
+          this.hashValue ^= this.C.ZobristHashes[v];
           return true;
       }
 
@@ -1247,7 +1246,7 @@
        * @returns {Integer}
        */
       hash() {
-          return hash((this.state.toString() + this.prevState[0].toString() + this.turn.toString()).replace(',', ''));
+          return this.hashValue;
       }
 
       /**
@@ -1333,8 +1332,8 @@
        * @param {bool} random
        * @returns {Float32Array[]}
        */
-      async evaluate(nn, random = true) {
-          const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+      async evaluate(nn, random$$1 = true) {
+          const symmetry = random$$1 ? Math.floor(Math.random() * 8) : 0;
           let [prob, value] = await nn.evaluate(this.feature(symmetry));
           if (symmetry !== 0) {
               const p = new Float32Array(prob.length);
@@ -1381,7 +1380,7 @@
           /** moves要素に対応するノードIDです。 */
           this.nodeIds = new Int16Array(this.C.BVCNT + 1);
           /** moves要素に対応するハッシュです。 */
-          this.hashes = new Uint32Array(this.C.BVCNT + 1);
+          this.hashes = new Int32Array(this.C.BVCNT + 1);
           /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
           this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
           this.totalValue = 0.0;
@@ -1409,9 +1408,9 @@
        * @param {UInt16[]} candidates Boardが生成する候補手情報です。
        * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
        */
-      initialize(hash$$1, moveNumber, candidates, prob) {
+      initialize(hash, moveNumber, candidates, prob) {
           this.clear();
-          this.hash = hash$$1;
+          this.hash = hash;
           this.moveNumber = moveNumber;
 
           for (const rv of argsort(prob, true)) {
@@ -1532,25 +1531,25 @@
        */
       createNode(b, prob) {
           const candidates = b.candidates();
-          const hash$$1 = b.hash();
-          if (this.nodeHashes.has(hash$$1)) {
-              const id = this.nodeHashes.get(hash$$1);
-              if (this.nodes[id].hash === hash$$1 &&
+          const hash = b.hash();
+          if (this.nodeHashes.has(hash)) {
+              const id = this.nodeHashes.get(hash);
+              if (this.nodes[id].hash === hash &&
                   this.nodes[id].moveNumber === b.moveNumber) {
                   return id;
               }
           }
 
-          let nodeId = hash$$1 % NODES_MAX_LENGTH;
+          let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
               nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
           }
 
-          this.nodeHashes.set(hash$$1, nodeId);
+          this.nodeHashes.set(hash, nodeId);
           this.nodesLength += 1;
 
           const node = this.nodes[nodeId];
-          node.initialize(hash$$1, b.moveNumber, candidates, prob);
+          node.initialize(hash, b.moveNumber, candidates, prob);
           return nodeId;
       }
 
@@ -1710,8 +1709,8 @@
        * @param {bool} random
        * @returns {Float32Array[]}
        */
-      async evaluate(b, random = true) {
-          let [prob, value] = await b.evaluate(this.nn, random);
+      async evaluate(b, random$$1 = true) {
+          let [prob, value] = await b.evaluate(this.nn, random$$1);
           if (this.evaluatePlugin) {
               prob = this.evaluatePlugin(b, prob);
           }
@@ -1725,13 +1724,13 @@
        * @returns {Node}
        */
       async prepareRootNode(b) {
-          const hash$$1 = b.hash();
+          const hash = b.hash();
           this.rootMoveNumber = b.moveNumber;
           this.C_PUCT = this.rootMoveNumber < 8 ? 0.01 : 1.5;
-          if (this.nodeHashes.has(hash$$1) &&
-              this.nodes[this.nodeHashes.get(hash$$1)].hash === hash$$1 &&
-              this.nodes[this.nodeHashes.get(hash$$1)].moveNumber === this.rootMoveNumber) {
-                  this.rootId = this.nodeHashes.get(hash$$1);
+          if (this.nodeHashes.has(hash) &&
+              this.nodes[this.nodeHashes.get(hash)].hash === hash &&
+              this.nodes[this.nodeHashes.get(hash)].moveNumber === this.rootMoveNumber) {
+                  this.rootId = this.nodeHashes.get(hash);
           } else {
               const [prob] = await this.evaluate(b);
               this.rootId = this.createNode(b, prob);

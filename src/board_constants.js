@@ -7,6 +7,8 @@
  * @license MIT
  */
 
+ import { random } from './utils.js';
+
 /** x座標ラベル文字列です。 */
 export const X_LABELS = '@ABCDEFGHJKLMNOPQRST';
 
@@ -73,7 +75,9 @@ export class BoardConstants {
         this.VNULL = this.EBVCNT + 1;
         this.BVCNT = this.BSIZE * this.BSIZE;
         this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
+        this.ZobristHashes = new Int32Array(this.EBVCNT + 1);
         this.initializeSymmetricRawVertex();
+        this.initializeZobristHashes();
         Object.freeze(this);
     }
 
@@ -230,5 +234,11 @@ export class BoardConstants {
             break;
         }
         return x + center + (y + center) * this.BSIZE;
+    }
+
+    initializeZobristHashes() {
+        for (let i = 0; i < this.ZobristHashes.length; i++) {
+            this.ZobristHashes[i] = random();
+        }
     }
 }

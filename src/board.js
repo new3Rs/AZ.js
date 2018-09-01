@@ -8,7 +8,7 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT
  */
-import { shuffle, mostCommon, hash } from './utils.js';
+import { shuffle, mostCommon } from './utils.js';
 import { X_LABELS, IntersectionState } from './board_constants.js';
 import { StoneGroup } from './stone_group.js';
 
@@ -55,6 +55,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
+        this.hashValue = 0x87654321;
         this.reset();
     }
 
@@ -296,6 +297,7 @@ class BaseBoard {
         this.history.push(v);
         this.turn = IntersectionState.opponentOf(this.turn);
         this.moveNumber += 1;
+        this.hashValue ^= this.C.ZobristHashes[v];
         return true;
     }
 
@@ -426,7 +428,7 @@ class BaseBoard {
      * @returns {Integer}
      */
     hash() {
-        return hash((this.state.toString() + this.prevState[0].toString() + this.turn.toString()).replace(',', ''));
+        return this.hashValue;
     }
 
     /**

@@ -72,22 +72,6 @@ export function argmax(obj) {
 }
 
 /**
- * strの32-bitハッシュ値を返します。
- * (注)19路盤では32-bitハッシュ値は衝突すると言われていますが衝突には対応していません。
- * @param {string} str 
- * @returns {Integer}
- */
-export function hash(str) {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
-        hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-}
-
-/**
  * 温度パラメータありのソフトマックス関数です。
  * @param {Float32Array} input 
  * @param {number} temperature
@@ -120,4 +104,14 @@ export function printProb(prob, size) {
         console.log(str);
     }
     console.log('pass=%s', prob[prob.length - 1].toFixed(1));
+}
+
+/**
+ * 与えられた範囲の整数乱数を返します。
+ * 引数を省略すると符号付き32ビット整数の乱数を返します。
+ * @param {Integer} min
+ * @param {Integer} max
+ */
+export function random(min = -0x80000000, max = 0x7FFFFFFF) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }

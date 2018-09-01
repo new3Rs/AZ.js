@@ -39,7 +39,7 @@ class Node {
         /** moves要素に対応するノードIDです。 */
         this.nodeIds = new Int16Array(this.C.BVCNT + 1);
         /** moves要素に対応するハッシュです。 */
-        this.hashes = new Uint32Array(this.C.BVCNT + 1);
+        this.hashes = new Int32Array(this.C.BVCNT + 1);
         /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
         this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
         this.totalValue = 0.0;
@@ -199,7 +199,7 @@ export class MCTS {
             }
         }
 
-        let nodeId = hash % NODES_MAX_LENGTH;
+        let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
         while (this.nodes[nodeId].moveNumber !== -1) {
             nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
         }
