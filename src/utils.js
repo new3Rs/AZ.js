@@ -183,4 +183,7 @@ export class TwoKeyMap {
         }
         return result;
     }
+    toString() {
+        return this.entries().map(e => e.map(e => e.toString()).join(': ')).join('\n');
+    }
 }
