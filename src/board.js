@@ -85,6 +85,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
+        this.hashValue = [0x12345678, 0x87654321];
     }
 
     /**
@@ -107,6 +108,7 @@ class BaseBoard {
         dest.moveNumber = this.moveNumber;
         dest.removeCnt = this.removeCnt;
         dest.history = Array.from(this.history);
+        dest.hashValue = Array.from(this.hashValue);
     }
 
     /**
