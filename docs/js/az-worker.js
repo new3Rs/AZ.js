@@ -453,7 +453,7 @@
    * @param {bool} reverse 
    */
   function argsort(array, reverse) {
-      const indices = Array.from(array).map((e, i) => i);
+      const indices = array.map((e, i) => i);
       if (reverse) {
           return indices.sort((a, b) => array[b] - array[a]);
       } else {
@@ -554,6 +554,9 @@
               }
           }
           return result;
+      }
+      toString() {
+          return this.entries().map(e => e.map(e => e.toString()).join(': ')).join('\n');
       }
   }
 
@@ -976,6 +979,7 @@
           this.prevMove = this.C.VNULL;
           this.removeCnt = 0;
           this.history = [];
+          this.hashValue = [0x12345678, 0x87654321];
       }
 
       /**
@@ -997,7 +1001,8 @@
           dest.turn = this.turn;
           dest.moveNumber = this.moveNumber;
           dest.removeCnt = this.removeCnt;
-          dest.history = Array.from(this.history);
+          dest.history = this.history.slice();
+          dest.hashValue = this.hashValue.slice();
       }
 
       /**
@@ -1461,7 +1466,7 @@
           this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
           this.totalValue = 0.0;
           this.totalCount = 0;
-          this.hash = 0;
+          this.hashValue = null;
           this.moveNumber = -1;
           this.sortedIndices = null;
           this.clear();
@@ -1472,7 +1477,7 @@
           this.edgeLength = 0;
           this.totalValue = 0.0;
           this.totalCount = 0;
-          this.hash = 0;
+          this.hashValue = null;
           this.moveNumber = -1;
           this.sortedIndices = null;
       }
@@ -1486,7 +1491,7 @@
        */
       initialize(hash, moveNumber, candidates, prob) {
           this.clear();
-          this.hash = hash.slice();
+          this.hashValue = hash.slice();
           this.moveNumber = moveNumber;
 
           for (const rv of argsort(prob, true)) {
@@ -1608,6 +1613,21 @@
       }
 
       /**
+       * this.nodesに同じ局面があればそのインデックスを返します。
+       * なければnullを変えします。
+       * @param {Board} b 
+       */
+      getNodeIdInNodes(b) {
+          const hash = b.hash();
+          if (this.nodeHashes.has(hash)) {
+              const id = this.nodeHashes.get(hash);
+              if (b.moveNumber === this.nodes[id].moveNumber) {
+                  return id;
+              }
+          }
+          return null;
+      }
+      /**
        * 局面bのMCTSの探索ノードが既にあるか確認し、なければ生成してノードIDを返します。
        * @param {Board} b 
        * @param {Float32Array} prob 
@@ -1618,9 +1638,7 @@
           const hash = b.hash();
           if (this.nodeHashes.has(hash)) {
               const id = this.nodeHashes.get(hash);
-              if (this.nodes[id].hash[0] === hash[0] &&
-                  this.nodes[id].hash[1] === hash[1] &&
-                  this.nodes[id].moveNumber === b.moveNumber) {
+              if (b.moveNumber === this.nodes[id].moveNumber) {
                   return id;
               }
           }
@@ -1648,7 +1666,7 @@
           for (let i = 0; i < NODES_MAX_LENGTH; i++) {
               const mn = this.nodes[i].moveNumber;
               if (mn >= 0 && mn < this.rootMoveNumber) {
-                  this.nodeHashes.delete(this.nodes[i].hash);
+                  this.nodeHashes.delete(this.nodes[i].hashValue);
                   this.nodes[i].clear();
               }
           }
@@ -1723,7 +1741,7 @@
               return false;
           }
           const edgeIndexHash = node.getHashes(edgeIndex);
-          const edgeIdHash = this.nodes[edgeId].hash;
+          const edgeIdHash = this.nodes[edgeId].hashValue;
           return edgeIndexHash[0] === edgeIdHash[0] &&
               edgeIndexHash[1] === edgeIdHash[1] &&
               this.nodes[edgeId].moveNumber === moveNumber;
@@ -1814,14 +1832,10 @@
        * @returns {Node}
        */
       async prepareRootNode(b) {
-          const hash = b.hash();
           this.rootMoveNumber = b.moveNumber;
           this.C_PUCT = this.rootMoveNumber < 8 ? 0.01 : 1.5;
-          if (this.nodeHashes.has(hash) &&
-              this.nodes[this.nodeHashes.get(hash)].hash === hash &&
-              this.nodes[this.nodeHashes.get(hash)].moveNumber === this.rootMoveNumber) {
-                  this.rootId = this.nodeHashes.get(hash);
-          } else {
+          this.rootId = this.getNodeIdInNodes(b);
+          if (this.rootId == null) {
               const [prob] = await this.evaluate(b);
               this.rootId = this.createNode(b, prob);
           }

@@ -46,7 +46,7 @@ export function mostCommon(array) {
  * @param {bool} reverse 
  */
 export function argsort(array, reverse) {
-    const indices = Array.from(array).map((e, i) => i);
+    const indices = array.map((e, i) => i);
     if (reverse) {
         return indices.sort((a, b) => array[b] - array[a]);
     } else {

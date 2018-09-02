@@ -107,8 +107,8 @@ class BaseBoard {
         dest.turn = this.turn;
         dest.moveNumber = this.moveNumber;
         dest.removeCnt = this.removeCnt;
-        dest.history = Array.from(this.history);
-        dest.hashValue = Array.from(this.hashValue);
+        dest.history = this.history.slice();
+        dest.hashValue = this.hashValue.slice();
     }
 
     /**
