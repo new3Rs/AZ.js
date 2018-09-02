@@ -1567,9 +1567,8 @@
           this.nn = nn;
           this.terminateFlag = false;
           this.exitCondition = null;
-          if (evaluatePlugin instanceof Function) {
-              this.evaluatePlugin = evaluatePlugin;
-          }
+          this.evaluatePlugin = evaluatePlugin;
+          this.collisions = 0;
       }
 
       /**
@@ -1875,7 +1874,15 @@
       async playout(b, nodeId) {
           const node = this.nodes[nodeId];
           const [selectedIndex, selectedId, selectedMove] = this.selectByUCB(b, node);
-          b.play(selectedMove);
+          try {
+              b.play(selectedMove);
+          } catch (e) {
+              this.collisions += 1;
+              console.log('collision');
+              b.showboard();
+              console.log('%s %d', b.C.ev2str(selectedMove), this.collisions);
+              b.play(b.C.PASS);
+          }
           const isHeadNode = !this.hasEdgeNode(selectedIndex, nodeId, b.moveNumber);
           /*
           // 以下はPyaqが採用したヘッドノードの条件です。
@@ -1946,10 +1953,12 @@
           }
 
           console.log(
-              '\nmove number=%d: left time=%s[sec] evaluated=%d',
+              '\nmove number=%d: left time=%s[sec] evaluated=%d collisions=%d',
               this.rootMoveNumber + 1,
               Math.max(this.leftTime - time, 0.0).toFixed(1),
-              this.evalCount);
+              this.evalCount,
+              this.collisions
+          );
           this.printInfo(this.rootId, b.C);
           this.leftTime = this.leftTime - (Date.now() - start) / 1000;
           return rootNode;
