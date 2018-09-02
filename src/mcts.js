@@ -8,7 +8,7 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT
  */
-import { argsort, argmax, printProb, TwoKeyMap } from './utils.js';
+import { argsort, argmax, printProb } from './utils.js';
 import { IntersectionState } from './board_constants.js';
 import { Board } from './board.js';
 
@@ -40,12 +40,12 @@ class Node {
         /** moves要素に対応するノードIDです。 */
         this.nodeIds = new Int16Array(this.C.BVCNT + 1);
         /** moves要素に対応するハッシュです。 */
-        this.hashes = new Int32Array(2 * (this.C.BVCNT + 1));
+        this.hashes = new Int32Array(this.C.BVCNT + 1);
         /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
         this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
         this.totalValue = 0.0;
         this.totalCount = 0;
-        this.hashValue = null;
+        this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
         this.clear();
@@ -56,7 +56,7 @@ class Node {
         this.edgeLength = 0;
         this.totalValue = 0.0;
         this.totalCount = 0;
-        this.hashValue = null;
+        this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
     }
@@ -70,7 +70,7 @@ class Node {
      */
     initialize(hash, moveNumber, candidates, prob) {
         this.clear();
-        this.hashValue = hash.slice();
+        this.hashValue = hash;
         this.moveNumber = moveNumber;
 
         for (const rv of argsort(prob, true)) {
@@ -81,20 +81,11 @@ class Node {
                 this.totalActionValues[this.edgeLength] = 0.0;
                 this.visitCounts[this.edgeLength] = 0;
                 this.nodeIds[this.edgeLength] = -1;
-                this.setHashes(this.edgeLength, [0, 0]);
+                this.hashes[this.edgeLength] = 0;
                 this.evaluated[this.edgeLength] = false;
                 this.edgeLength += 1;
             }
         }
-    }
-
-    getHashes(index) {
-        return [this.hashes[2 * index], this.hashes[2 * index + 1]];
-    }
-
-    setHashes(index, hash) {
-        this.hashes[2 * index] = hash[0];
-        this.hashes[2 * index + 1] = hash[1];
     }
 
     /**
@@ -146,7 +137,7 @@ export class MCTS {
         }
         this.rootId = 0;
         this.rootMoveNumber = 0;
-        this.nodeHashes = new TwoKeyMap();
+        this.nodeHashes = new Map();
         this.evalCount = 0;
         this.nn = nn;
         this.terminateFlag = false;
@@ -197,7 +188,7 @@ export class MCTS {
      * @param {Board} b 
      */
     getNodeIdInNodes(b) {
-        const hash = b.hash();
+        const hash = b.hashValue;
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
             if (b.moveNumber === this.nodes[id].moveNumber) {
@@ -214,7 +205,7 @@ export class MCTS {
      */
     createNode(b, prob) {
         const candidates = b.candidates();
-        const hash = b.hash();
+        const hash = b.hashValue;
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
             if (b.moveNumber === this.nodes[id].moveNumber) {
@@ -222,7 +213,7 @@ export class MCTS {
             }
         }
 
-        let nodeId = Math.abs(hash[0]) % NODES_MAX_LENGTH;
+        let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
         while (this.nodes[nodeId].moveNumber !== -1) {
             nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
         }
@@ -319,10 +310,7 @@ export class MCTS {
         if (edgeId < 0) {
             return false;
         }
-        const edgeIndexHash = node.getHashes(edgeIndex);
-        const edgeIdHash = this.nodes[edgeId].hashValue;
-        return edgeIndexHash[0] === edgeIdHash[0] &&
-            edgeIndexHash[1] === edgeIdHash[1] &&
+        return node.hashes[edgeIndex] === this.nodes[edgeId].hashValue &&
             this.nodes[edgeId].moveNumber === moveNumber;
     }
 
@@ -451,7 +439,7 @@ export class MCTS {
         }
         */
         parentNode.nodeIds[edgeIndex] = nodeId;
-        parentNode.setHashes(edgeIndex, b.hash());
+        parentNode.hashes[edgeIndex] = b.hashValue;
         parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
         parentNode.totalCount += parentNode.visitCounts[edgeIndex];
         return value;

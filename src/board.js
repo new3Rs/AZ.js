@@ -55,7 +55,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
-        this.hashValue = [0x12345678, 0x87654321];
+        this.hashValue = 0x87654321;
         this.reset();
     }
 
@@ -85,7 +85,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
-        this.hashValue = [0x12345678, 0x87654321];
+        this.hashValue = 0x87654321;
     }
 
     /**
@@ -108,7 +108,7 @@ class BaseBoard {
         dest.moveNumber = this.moveNumber;
         dest.removeCnt = this.removeCnt;
         dest.history = this.history.slice();
-        dest.hashValue = this.hashValue.slice();
+        dest.hashValue = this.hashValue;
     }
 
     /**
@@ -301,8 +301,7 @@ class BaseBoard {
         this.history.push(v);
         this.turn = IntersectionState.opponentOf(this.turn);
         this.moveNumber += 1;
-        this.hashValue[0] ^= this.C.ZobristHashes[0][v];
-        this.hashValue[1] ^= this.C.ZobristHashes[1][v];
+        this.hashValue ^= this.C.ZobristHashes[v];
     }
 
     /**
@@ -425,15 +424,6 @@ class BaseBoard {
         }
         this.printXlabel();
         console.log('');
-    }
-
-    /**
-     * 現在の局面のハッシュ値を返します。
-     * (注)手数情報は含みません。なので比較にはハッシュ値と手数両方を使います。
-     * @returns {Integer}
-     */
-    hash() {
-        return this.hashValue;
     }
 
     /**

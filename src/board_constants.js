@@ -75,7 +75,7 @@ export class BoardConstants {
         this.VNULL = this.EBVCNT + 1;
         this.BVCNT = this.BSIZE * this.BSIZE;
         this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
-        this.ZobristHashes = [new Int32Array(this.EBVCNT + 1), new Int32Array(this.EBVCNT + 1)];
+        this.ZobristHashes = new Int32Array(this.EBVCNT + 1);
         this.initializeSymmetricRawVertex();
         this.initializeZobristHashes();
         Object.freeze(this);
@@ -237,11 +237,8 @@ export class BoardConstants {
     }
 
     initializeZobristHashes() {
-        for (let j = 0; j < this.ZobristHashes.length; j++) {
-            const hashes = this.ZobristHashes[j];
-            for (let i = 0; i < hashes.length; i++) {
-                hashes[i] = random();
-            }
+        for (let i = 0; i < this.ZobristHashes.length; i++) {
+            this.ZobristHashes[i] = random();
         }
     }
 }
