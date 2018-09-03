@@ -48,6 +48,7 @@ class Node {
         this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
+        this.position = '';
         this.clear();
     }
 
@@ -59,6 +60,7 @@ class Node {
         this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
+        this.position = '';
     }
 
     /**
@@ -68,10 +70,11 @@ class Node {
      * @param {UInt16[]} candidates Boardが生成する候補手情報です。
      * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
      */
-    initialize(hash, moveNumber, candidates, prob) {
+    initialize(hash, moveNumber, candidates, prob, position) {
         this.clear();
         this.hashValue = hash;
         this.moveNumber = moveNumber;
+        this.position = position;
 
         for (const rv of argsort(prob, true)) {
             if (candidates.includes(rv)) {
@@ -192,7 +195,14 @@ export class MCTS {
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
             if (b.moveNumber === this.nodes[id].moveNumber) {
-                return id;
+                if (b.toString() === this.nodes[id].position) {
+                    return id;
+                } else {
+                    this.collisions += 1;
+                    console.log('collision');
+                    b.showboard();
+                    console.log(this.nodes[id].position);
+                }
             }
         }
         return null;
@@ -222,7 +232,7 @@ export class MCTS {
         this.nodesLength += 1;
 
         const node = this.nodes[nodeId];
-        node.initialize(hash, b.moveNumber, candidates, prob);
+        node.initialize(hash, b.moveNumber, candidates, prob, b.toString());
         return nodeId;
     }
 
@@ -458,8 +468,7 @@ export class MCTS {
         try {
             b.play(selectedMove);
         } catch (e) {
-            this.collisions += 1;
-            console.log('collision');
+            console.error(e);
             b.showboard();
             console.log('%s %d', b.C.ev2str(selectedMove), this.collisions);
             b.play(b.C.PASS);
@@ -530,6 +539,7 @@ export class MCTS {
             [best, second] = rootNode.getSortedIndices();
         }
 
+        console.log('current position');
         console.log(
             '\nmove number=%d: left time=%s[sec] evaluated=%d collisions=%d',
             this.rootMoveNumber + 1,

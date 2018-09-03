@@ -95,7 +95,7 @@ export function softmax(input, temperature = 1.0) {
     return output;
 }
 
-export function printProb(prob, size) {
+export function printProb(prob, size = 19) {
     for (let y = 0; y < size; y++) {
         let str = `${y + 1} `;
         for (let x = 0; x < size; x++) {

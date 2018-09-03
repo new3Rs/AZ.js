@@ -382,23 +382,8 @@ class BaseBoard {
         }
     }
 
-    /**
-     * 碁盤のx軸ラベルを表示します。
-     * @private
-     */
-    printXlabel() {
-        let lineStr = '  ';
-        for (let x = 1; x <= this.C.BSIZE; x++) {
-            lineStr += ` ${X_LABELS[x]} `;
-        }
-        console.log(lineStr);
-    }
-
-    /**
-     * 碁盤をコンソールに出力します。
-     */
-    showboard() {
-        this.printXlabel();
+    toString(mark = false) {
+        let result = this.xLabel();
         for (let y = this.C.BSIZE; y > 0; y--) {
             let lineStr = (' ' + y.toString()).slice(-2);
             for (let x = 1; x <= this.C.BSIZE; x++) {
@@ -406,10 +391,10 @@ class BaseBoard {
                 let xStr;
                 switch (this.state[v]) {
                     case IntersectionState.BLACK:
-                    xStr = v === this.prevMove ? '[X]' : ' X ';
+                    xStr = mark && v === this.prevMove ? '[X]' : ' X ';
                     break;
                     case IntersectionState.WHITE:
-                    xStr = v === this.prevMove ? '[O]' : ' O ';
+                    xStr = mark && v === this.prevMove ? '[O]' : ' O ';
                     break;
                     case IntersectionState.EMPTY:
                     xStr = ' . ';
@@ -420,10 +405,29 @@ class BaseBoard {
                 lineStr += xStr;
             }
             lineStr += (' ' + y.toString()).slice(-2);
-            console.log(lineStr);
+            result += lineStr + '\n';
         }
-        this.printXlabel();
-        console.log('');
+        result += this.xLabel();
+        return result;
+    }
+
+    /**
+     * toStringのヘルパーメソッドです。
+     * @private
+     */
+    xLabel() {
+        let lineStr = '  ';
+        for (let x = 1; x <= this.C.BSIZE; x++) {
+            lineStr += ` ${X_LABELS[x]} `;
+        }
+        return lineStr + '\n';
+    }
+
+    /**
+     * 碁盤をコンソールに出力します。
+     */
+    showboard() {
+        console.log(this.toString(true));
     }
 
     /**

@@ -1201,23 +1201,8 @@
           }
       }
 
-      /**
-       * 碁盤のx軸ラベルを表示します。
-       * @private
-       */
-      printXlabel() {
-          let lineStr = '  ';
-          for (let x = 1; x <= this.C.BSIZE; x++) {
-              lineStr += ` ${X_LABELS[x]} `;
-          }
-          console.log(lineStr);
-      }
-
-      /**
-       * 碁盤をコンソールに出力します。
-       */
-      showboard() {
-          this.printXlabel();
+      toString(mark = false) {
+          let result = this.xLabel();
           for (let y = this.C.BSIZE; y > 0; y--) {
               let lineStr = (' ' + y.toString()).slice(-2);
               for (let x = 1; x <= this.C.BSIZE; x++) {
@@ -1225,10 +1210,10 @@
                   let xStr;
                   switch (this.state[v]) {
                       case IntersectionState.BLACK:
-                      xStr = v === this.prevMove ? '[X]' : ' X ';
+                      xStr = mark && v === this.prevMove ? '[X]' : ' X ';
                       break;
                       case IntersectionState.WHITE:
-                      xStr = v === this.prevMove ? '[O]' : ' O ';
+                      xStr = mark && v === this.prevMove ? '[O]' : ' O ';
                       break;
                       case IntersectionState.EMPTY:
                       xStr = ' . ';
@@ -1239,10 +1224,29 @@
                   lineStr += xStr;
               }
               lineStr += (' ' + y.toString()).slice(-2);
-              console.log(lineStr);
+              result += lineStr + '\n';
           }
-          this.printXlabel();
-          console.log('');
+          result += this.xLabel();
+          return result;
+      }
+
+      /**
+       * toStringのヘルパーメソッドです。
+       * @private
+       */
+      xLabel() {
+          let lineStr = '  ';
+          for (let x = 1; x <= this.C.BSIZE; x++) {
+              lineStr += ` ${X_LABELS[x]} `;
+          }
+          return lineStr + '\n';
+      }
+
+      /**
+       * 碁盤をコンソールに出力します。
+       */
+      showboard() {
+          console.log(this.toString(true));
       }
 
       /**
@@ -1384,6 +1388,7 @@
           this.hashValue = 0;
           this.moveNumber = -1;
           this.sortedIndices = null;
+          this.position = '';
           this.clear();
       }
 
@@ -1395,6 +1400,7 @@
           this.hashValue = 0;
           this.moveNumber = -1;
           this.sortedIndices = null;
+          this.position = '';
       }
 
       /**
@@ -1404,10 +1410,11 @@
        * @param {UInt16[]} candidates Boardが生成する候補手情報です。
        * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
        */
-      initialize(hash, moveNumber, candidates, prob) {
+      initialize(hash, moveNumber, candidates, prob, position) {
           this.clear();
           this.hashValue = hash;
           this.moveNumber = moveNumber;
+          this.position = position;
 
           for (const rv of argsort(prob, true)) {
               if (candidates.includes(rv)) {
@@ -1528,7 +1535,14 @@
           if (this.nodeHashes.has(hash)) {
               const id = this.nodeHashes.get(hash);
               if (b.moveNumber === this.nodes[id].moveNumber) {
-                  return id;
+                  if (b.toString() === this.nodes[id].position) {
+                      return id;
+                  } else {
+                      this.collisions += 1;
+                      console.log('collision');
+                      b.showboard();
+                      console.log(this.nodes[id].position);
+                  }
               }
           }
           return null;
@@ -1558,7 +1572,7 @@
           this.nodesLength += 1;
 
           const node = this.nodes[nodeId];
-          node.initialize(hash, b.moveNumber, candidates, prob);
+          node.initialize(hash, b.moveNumber, candidates, prob, b.toString());
           return nodeId;
       }
 
@@ -1794,8 +1808,7 @@
           try {
               b.play(selectedMove);
           } catch (e) {
-              this.collisions += 1;
-              console.log('collision');
+              console.error(e);
               b.showboard();
               console.log('%s %d', b.C.ev2str(selectedMove), this.collisions);
               b.play(b.C.PASS);
@@ -1866,6 +1879,7 @@
               [best, second] = rootNode.getSortedIndices();
           }
 
+          console.log('current position');
           console.log(
               '\nmove number=%d: left time=%s[sec] evaluated=%d collisions=%d',
               this.rootMoveNumber + 1,
