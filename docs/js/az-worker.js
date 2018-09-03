@@ -558,7 +558,7 @@
           this.VNULL = this.EBVCNT + 1;
           this.BVCNT = this.BSIZE * this.BSIZE;
           this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
-          this.ZobristHashes = new Int32Array(this.EBVCNT + 1);
+          this.ZobristHashes = [new Int32Array(this.EBVCNT + 1), new Int32Array(this.EBVCNT + 1)];
           this.initializeSymmetricRawVertex();
           this.initializeZobristHashes();
           Object.freeze(this);
@@ -720,8 +720,11 @@
       }
 
       initializeZobristHashes() {
-          for (let i = 0; i < this.ZobristHashes.length; i++) {
-              this.ZobristHashes[i] = random();
+          for (let turn = 0; turn < this.ZobristHashes.length; turn++) {
+              const hashes = this.ZobristHashes[turn];
+              for (let i = 0; i < hashes.length; i++) {
+                  hashes[i] = random();
+              }
           }
       }
   }
@@ -1118,9 +1121,9 @@
           }
           this.prevMove = v;
           this.history.push(v);
+          this.hashValue ^= this.C.ZobristHashes[this.turn][v];
           this.turn = IntersectionState.opponentOf(this.turn);
           this.moveNumber += 1;
-          this.hashValue ^= this.C.ZobristHashes[v];
       }
 
       /**

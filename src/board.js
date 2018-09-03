@@ -299,9 +299,9 @@ class BaseBoard {
         }
         this.prevMove = v;
         this.history.push(v);
+        this.hashValue ^= this.C.ZobristHashes[this.turn][v];
         this.turn = IntersectionState.opponentOf(this.turn);
         this.moveNumber += 1;
-        this.hashValue ^= this.C.ZobristHashes[v];
     }
 
     /**
