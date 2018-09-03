@@ -1328,8 +1328,8 @@
        * @param {bool} random
        * @returns {Float32Array[]}
        */
-      async evaluate(nn, random$$1 = true) {
-          const symmetry = random$$1 ? Math.floor(Math.random() * 8) : 0;
+      async evaluate(nn, randomSymmetry = true) {
+          const symmetry = randomSymmetry ? random(0, 8) : 0;
           let [prob, value] = await nn.evaluate(this.feature(symmetry));
           if (symmetry !== 0) {
               const p = new Float32Array(prob.length);
@@ -1857,11 +1857,8 @@
 
           const time_ = (time === 0.0 ? this.getSearchTime(b.C) : time) * 1000 - 500; // 0.5秒のマージン
           this.terminateFlag = false;
-          this.exitCondition = ponder ? function() {
-              return this.terminateFlag;
-          } : function() {
-              return this.terminateFlag || Date.now() - start > time_;
-          };
+          this.exitCondition = ponder ? () => this.terminateFlag :
+              () => this.terminateFlag || Date.now() - start > time_;
 
           let [best, second] = rootNode.getSortedIndices();
           if (ponder || this.shouldSearch(best, second)) {

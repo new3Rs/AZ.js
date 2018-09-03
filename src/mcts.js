@@ -521,11 +521,8 @@ export class MCTS {
 
         const time_ = (time === 0.0 ? this.getSearchTime(b.C) : time) * 1000 - 500; // 0.5秒のマージン
         this.terminateFlag = false;
-        this.exitCondition = ponder ? function() {
-            return this.terminateFlag;
-        } : function() {
-            return this.terminateFlag || Date.now() - start > time_;
-        };
+        this.exitCondition = ponder ? () => this.terminateFlag :
+            () => this.terminateFlag || Date.now() - start > time_;
 
         let [best, second] = rootNode.getSortedIndices();
         if (ponder || this.shouldSearch(best, second)) {

@@ -8,7 +8,7 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT
  */
-import { shuffle, mostCommon } from './utils.js';
+import { shuffle, mostCommon, random } from './utils.js';
 import { X_LABELS, IntersectionState } from './board_constants.js';
 import { StoneGroup } from './stone_group.js';
 
@@ -509,8 +509,8 @@ export class Board extends BaseBoard {
      * @param {bool} random
      * @returns {Float32Array[]}
      */
-    async evaluate(nn, random = true) {
-        const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+    async evaluate(nn, randomSymmetry = true) {
+        const symmetry = randomSymmetry ? random(0, 8) : 0;
         let [prob, value] = await nn.evaluate(this.feature(symmetry));
         if (symmetry !== 0) {
             const p = new Float32Array(prob.length);
