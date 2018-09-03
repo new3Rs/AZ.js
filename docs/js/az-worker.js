@@ -1127,6 +1127,14 @@
       }
 
       /**
+       * ハッシュ値を返します。
+       * @returns {number}
+       */
+      hash() {
+          return this.hashValue + this.ko;
+      }
+
+      /**
        * 眼形を潰さないようにランダムに着手します。
        * @returns {Uint16}
        */
@@ -1531,7 +1539,7 @@
        * @param {Board} b 
        */
       getNodeIdInNodes(b) {
-          const hash = b.hashValue;
+          const hash = b.hash();
           if (this.nodeHashes.has(hash)) {
               const id = this.nodeHashes.get(hash);
               if (b.moveNumber === this.nodes[id].moveNumber) {
@@ -1548,7 +1556,7 @@
        */
       createNode(b, prob) {
           const candidates = b.candidates();
-          const hash = b.hashValue;
+          const hash = b.hash();
           if (this.nodeHashes.has(hash)) {
               const id = this.nodeHashes.get(hash);
               if (b.moveNumber === this.nodes[id].moveNumber) {
@@ -1782,7 +1790,7 @@
           }
           */
           parentNode.nodeIds[edgeIndex] = nodeId;
-          parentNode.hashes[edgeIndex] = b.hashValue;
+          parentNode.hashes[edgeIndex] = b.hash();
           parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
           parentNode.totalCount += parentNode.visitCounts[edgeIndex];
           return value;

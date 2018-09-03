@@ -188,7 +188,7 @@ export class MCTS {
      * @param {Board} b 
      */
     getNodeIdInNodes(b) {
-        const hash = b.hashValue;
+        const hash = b.hash();
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
             if (b.moveNumber === this.nodes[id].moveNumber) {
@@ -205,7 +205,7 @@ export class MCTS {
      */
     createNode(b, prob) {
         const candidates = b.candidates();
-        const hash = b.hashValue;
+        const hash = b.hash();
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
             if (b.moveNumber === this.nodes[id].moveNumber) {
@@ -439,7 +439,7 @@ export class MCTS {
         }
         */
         parentNode.nodeIds[edgeIndex] = nodeId;
-        parentNode.hashes[edgeIndex] = b.hashValue;
+        parentNode.hashes[edgeIndex] = b.hash();
         parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
         parentNode.totalCount += parentNode.visitCounts[edgeIndex];
         return value;

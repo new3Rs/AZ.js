@@ -305,6 +305,14 @@ class BaseBoard {
     }
 
     /**
+     * ハッシュ値を返します。
+     * @returns {number}
+     */
+    hash() {
+        return this.hashValue + this.ko;
+    }
+
+    /**
      * 眼形を潰さないようにランダムに着手します。
      * @returns {Uint16}
      */
