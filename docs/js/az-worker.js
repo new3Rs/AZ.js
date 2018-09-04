@@ -360,6 +360,7 @@
                   message.result = result;
                   this.workerRMI.target.postMessage(message, getTransferList(result));
               } catch (e) {
+                  console.error(e);
                   message.error = e.toString();
                   this.workerRMI.target.postMessage(message);
               }
@@ -1533,14 +1534,6 @@
       createNode(b, prob) {
           const candidates = b.candidates();
           const hash$$1 = b.hash();
-          if (this.nodeHashes.has(hash$$1)) {
-              const id = this.nodeHashes.get(hash$$1);
-              if (this.nodes[id].hash === hash$$1 &&
-                  this.nodes[id].moveNumber === b.moveNumber) {
-                  return id;
-              }
-          }
-
           let nodeId = hash$$1 % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
               nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;

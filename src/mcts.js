@@ -191,14 +191,6 @@ export class MCTS {
     createNode(b, prob) {
         const candidates = b.candidates();
         const hash = b.hash();
-        if (this.nodeHashes.has(hash)) {
-            const id = this.nodeHashes.get(hash);
-            if (this.nodes[id].hash === hash &&
-                this.nodes[id].moveNumber === b.moveNumber) {
-                return id;
-            }
-        }
-
         let nodeId = hash % NODES_MAX_LENGTH;
         while (this.nodes[nodeId].moveNumber !== -1) {
             nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;

@@ -456,6 +456,7 @@ async function handleWorkerRMI(event) {
                 message.result = result;
                 this.workerRMI.target.postMessage(message, getTransferList(result));
             } catch (e) {
+                console.error(e);
                 message.error = e.toString();
                 this.workerRMI.target.postMessage(message);
             }
