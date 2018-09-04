@@ -187,7 +187,7 @@ export class MCTS {
 
     /**
      * this.nodesに同じ局面があればそのインデックスを返します。
-     * なければnullを変えします。
+     * なければnullを返します。
      * @param {Board} b 
      */
     getNodeIdInNodes(b) {
