@@ -1564,13 +1564,9 @@
        * @returns {Integer} ノードID
        */
       createNode(b, prob) {
-          let nodeId = this.getNodeIdInNodes(b);
-          if (nodeId != null) {
-              return nodeId;
-          }
           const candidates = b.candidates();
           const hash = b.hash();
-          nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
+          let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
               nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
           }
