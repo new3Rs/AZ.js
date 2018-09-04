@@ -84,7 +84,7 @@ export function hash(str) {
         hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
         hash = hash & hash; // Convert to 32bit integer
     }
-    return Math.abs(hash);
+    return hash;
 }
 
 /**

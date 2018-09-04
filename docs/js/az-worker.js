@@ -726,7 +726,7 @@
           hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
           hash = hash & hash; // Convert to 32bit integer
       }
-      return Math.abs(hash);
+      return hash;
   }
 
   /**
@@ -1382,7 +1382,7 @@
           /** moves要素に対応するノードIDです。 */
           this.nodeIds = new Int16Array(this.C.BVCNT + 1);
           /** moves要素に対応するハッシュです。 */
-          this.hashes = new Uint32Array(this.C.BVCNT + 1);
+          this.hashes = new Int32Array(this.C.BVCNT + 1);
           /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
           this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
           this.totalValue = 0.0;
@@ -1534,7 +1534,7 @@
       createNode(b, prob) {
           const candidates = b.candidates();
           const hash$$1 = b.hash();
-          let nodeId = hash$$1 % NODES_MAX_LENGTH;
+          let nodeId = Math.abs(hash$$1) % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
               nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
           }
