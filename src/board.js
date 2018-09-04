@@ -434,8 +434,8 @@ class BaseBoard {
     /**
      * 碁盤をコンソールに出力します。
      */
-    showboard() {
-        console.log(this.toString(true));
+    showboard(mark) {
+        console.log(this.toString(mark));
     }
 
     /**

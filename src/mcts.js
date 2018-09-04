@@ -14,7 +14,7 @@ import { Board } from './board.js';
 
 const NODES_MAX_LENGTH = 16384;
 const EXPAND_CNT = 8;
-
+const COLLISION_DETECT = true;
 
 /** MCTSのノードクラスです。 */
 class Node {
@@ -48,6 +48,7 @@ class Node {
         this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
+        this.position = null;
         this.clear();
     }
 
@@ -59,6 +60,7 @@ class Node {
         this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
+        this.position = null;
     }
 
     /**
@@ -68,10 +70,11 @@ class Node {
      * @param {UInt16[]} candidates Boardが生成する候補手情報です。
      * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
      */
-    initialize(hash, moveNumber, candidates, prob) {
+    initialize(hash, moveNumber, candidates, prob, position = null) {
         this.clear();
         this.hashValue = hash;
         this.moveNumber = moveNumber;
+        this.position = position;
 
         for (const rv of argsort(prob, true)) {
             if (candidates.includes(rv)) {
@@ -192,7 +195,14 @@ export class MCTS {
         if (this.nodeHashes.has(hash)) {
             const id = this.nodeHashes.get(hash);
             if (b.moveNumber === this.nodes[id].moveNumber) {
-                return id;
+                if (!COLLISION_DETECT || b.toString() === this.nodes[id].position) {
+                    return id;
+                } else {
+                    this.collisions += 1;
+                    console.log('hash collision');
+                    b.showboard(false);
+                    console.log(this.nodes[id].position);
+                }
             }
         }
         return null;
@@ -204,16 +214,13 @@ export class MCTS {
      * @returns {Integer} ノードID
      */
     createNode(b, prob) {
+        let nodeId = this.getNodeIdInNodes(b);
+        if (nodeId != null) {
+            return nodeId;
+        }
         const candidates = b.candidates();
         const hash = b.hash();
-        if (this.nodeHashes.has(hash)) {
-            const id = this.nodeHashes.get(hash);
-            if (b.moveNumber === this.nodes[id].moveNumber) {
-                return id;
-            }
-        }
-
-        let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
+        nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
         while (this.nodes[nodeId].moveNumber !== -1) {
             nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
         }
@@ -529,7 +536,6 @@ export class MCTS {
             [best, second] = rootNode.getSortedIndices();
         }
 
-        console.log('current position');
         console.log(
             '\nmove number=%d: left time=%s[sec] evaluated=%d collisions=%d',
             this.rootMoveNumber + 1,
