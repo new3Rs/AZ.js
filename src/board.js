@@ -522,7 +522,7 @@ export class Board extends BaseBoard {
      * @returns {Float32Array[]}
      */
     async evaluate(nn, randomSymmetry = true) {
-        const symmetry = randomSymmetry ? random(0, 8) : 0;
+        const symmetry = randomSymmetry ? random(0, 7) : 0;
         let [prob, value] = await nn.evaluate(this.feature(symmetry));
         if (symmetry !== 0) {
             const p = new Float32Array(prob.length);
