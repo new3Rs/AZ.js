@@ -8,7 +8,7 @@
  * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
  * @license MIT
  */
-import { shuffle, mostCommon, hash } from './utils.js';
+import { shuffle, mostCommon, random } from './utils.js';
 import { X_LABELS, IntersectionState } from './board_constants.js';
 import { StoneGroup } from './stone_group.js';
 
@@ -55,6 +55,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
+        this.hashValue = 0x87654321;
         this.reset();
     }
 
@@ -84,6 +85,7 @@ class BaseBoard {
         this.prevMove = this.C.VNULL;
         this.removeCnt = 0;
         this.history = [];
+        this.hashValue = 0x87654321;
     }
 
     /**
@@ -105,12 +107,14 @@ class BaseBoard {
         dest.turn = this.turn;
         dest.moveNumber = this.moveNumber;
         dest.removeCnt = this.removeCnt;
-        dest.history = Array.from(this.history);
+        dest.history = this.history.slice();
+        dest.hashValue = this.hashValue;
     }
 
     /**
      * 拡張線形座標の配列を受け取って順に着手します。
      * @param {Uin16[]} sequence 
+     * @throws {Error}
      */
     playSequence(sequence) {
         for (const v of sequence) {
@@ -270,13 +274,14 @@ class BaseBoard {
      * 交点vに着手します。
      * @param {*} v 拡張線形座標
      * @param {*} notFillEye 眼を潰すことを許可しない
+     * @throws {Error}
      */
     play(v, notFillEye = false) {
         if (!this.legal(v)) {
-            return false;
+            throw new Error('illegal move');
         }
         if (notFillEye && this.eyeshape(v, this.turn)) {
-            return false;
+            throw new Error('eye-fill move');
         }
         for (let i = KEEP_PREV_CNT - 2; i >= 0; i--) {
             this.prevState[i + 1] = this.prevState[i];
@@ -294,9 +299,17 @@ class BaseBoard {
         }
         this.prevMove = v;
         this.history.push(v);
+        this.hashValue ^= this.C.ZobristHashes[this.turn][v];
         this.turn = IntersectionState.opponentOf(this.turn);
         this.moveNumber += 1;
-        return true;
+    }
+
+    /**
+     * ハッシュ値を返します。
+     * @returns {number}
+     */
+    hash() {
+        return this.hashValue + this.ko;
     }
 
     /**
@@ -312,11 +325,12 @@ class BaseBoard {
         }
         shuffle(emptyList);
         for (const v of emptyList) {
-            if (this.play(v, true)) {
+            try {
+                this.play(v, true);
                 return v;
-            }
+            } catch (e) {}
         }
-        this.play(this.C.PASS, true);
+        this.play(this.C.PASS);
         return this.C.PASS;
     }
 
@@ -376,23 +390,8 @@ class BaseBoard {
         }
     }
 
-    /**
-     * 碁盤のx軸ラベルを表示します。
-     * @private
-     */
-    printXlabel() {
-        let lineStr = '  ';
-        for (let x = 1; x <= this.C.BSIZE; x++) {
-            lineStr += ` ${X_LABELS[x]} `;
-        }
-        console.log(lineStr);
-    }
-
-    /**
-     * 碁盤をコンソールに出力します。
-     */
-    showboard() {
-        this.printXlabel();
+    toString(mark = false) {
+        let result = this.xLabel();
         for (let y = this.C.BSIZE; y > 0; y--) {
             let lineStr = (' ' + y.toString()).slice(-2);
             for (let x = 1; x <= this.C.BSIZE; x++) {
@@ -400,10 +399,10 @@ class BaseBoard {
                 let xStr;
                 switch (this.state[v]) {
                     case IntersectionState.BLACK:
-                    xStr = v === this.prevMove ? '[X]' : ' X ';
+                    xStr = mark && v === this.prevMove ? '[X]' : ' X ';
                     break;
                     case IntersectionState.WHITE:
-                    xStr = v === this.prevMove ? '[O]' : ' O ';
+                    xStr = mark && v === this.prevMove ? '[O]' : ' O ';
                     break;
                     case IntersectionState.EMPTY:
                     xStr = ' . ';
@@ -414,19 +413,29 @@ class BaseBoard {
                 lineStr += xStr;
             }
             lineStr += (' ' + y.toString()).slice(-2);
-            console.log(lineStr);
+            result += lineStr + '\n';
         }
-        this.printXlabel();
-        console.log('');
+        result += this.xLabel();
+        return result;
     }
 
     /**
-     * 現在の局面のハッシュ値を返します。
-     * (注)手数情報は含みません。なので比較にはハッシュ値と手数両方を使います。
-     * @returns {Integer}
+     * toStringのヘルパーメソッドです。
+     * @private
      */
-    hash() {
-        return hash((this.state.toString() + this.prevState[0].toString() + this.turn.toString()).replace(',', ''));
+    xLabel() {
+        let lineStr = '  ';
+        for (let x = 1; x <= this.C.BSIZE; x++) {
+            lineStr += ` ${X_LABELS[x]} `;
+        }
+        return lineStr + '\n';
+    }
+
+    /**
+     * 碁盤をコンソールに出力します。
+     */
+    showboard(mark) {
+        console.log(this.toString(mark));
     }
 
     /**
@@ -512,8 +521,8 @@ export class Board extends BaseBoard {
      * @param {bool} random
      * @returns {Float32Array[]}
      */
-    async evaluate(nn, random = true) {
-        const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+    async evaluate(nn, randomSymmetry = true) {
+        const symmetry = randomSymmetry ? random(0, 7) : 0;
         let [prob, value] = await nn.evaluate(this.feature(symmetry));
         if (symmetry !== 0) {
             const p = new Float32Array(prob.length);

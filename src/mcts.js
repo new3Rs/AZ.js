@@ -9,11 +9,12 @@
  * @license MIT
  */
 import { argsort, argmax, printProb } from './utils.js';
+import { IntersectionState } from './board_constants.js';
 import { Board } from './board.js';
 
 const NODES_MAX_LENGTH = 16384;
 const EXPAND_CNT = 8;
-
+const COLLISION_DETECT = true;
 
 /** MCTSのノードクラスです。 */
 class Node {
@@ -44,9 +45,10 @@ class Node {
         this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
         this.totalValue = 0.0;
         this.totalCount = 0;
-        this.hash = 0;
+        this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
+        this.position = null;
         this.clear();
     }
 
@@ -55,9 +57,10 @@ class Node {
         this.edgeLength = 0;
         this.totalValue = 0.0;
         this.totalCount = 0;
-        this.hash = 0;
+        this.hashValue = 0;
         this.moveNumber = -1;
         this.sortedIndices = null;
+        this.position = null;
     }
 
     /**
@@ -67,10 +70,11 @@ class Node {
      * @param {UInt16[]} candidates Boardが生成する候補手情報です。
      * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
      */
-    initialize(hash, moveNumber, candidates, prob) {
+    initialize(hash, moveNumber, candidates, prob, position = null) {
         this.clear();
-        this.hash = hash;
+        this.hashValue = hash;
         this.moveNumber = moveNumber;
+        this.position = position;
 
         for (const rv of argsort(prob, true)) {
             if (candidates.includes(rv)) {
@@ -110,9 +114,31 @@ class Node {
      */
     getSortedIndices() {
         if (this.sortedIndices == null) {
-            this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true);
+            this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true, this.values.slice(0, this.edgeLength));
         }
         return this.sortedIndices;
+    }
+
+
+    /**
+     * UCB評価で最善の着手情報を返します。
+     * @param {number} c_puct
+     * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
+     */
+    selectByUCB(c_puct) {
+        const cpsv = c_puct * Math.sqrt(this.totalCount);
+        const meanActionValues = new Float32Array(this.edgeLength);
+        for (let i = 0; i < meanActionValues.length; i++) {
+            meanActionValues[i] = this.visitCounts[i] === 0 ? 0 : this.totalActionValues[i] / this.visitCounts[i];
+        }
+        const ucb = new Float32Array(this.edgeLength);
+        for (let i = 0; i < ucb.length; i++) {
+            ucb[i] = meanActionValues[i] + cpsv * this.probabilities[i] / (1 + this.visitCounts[i]);
+        }
+        const selectedIndex = argmax(ucb);
+        const selectedId = this.nodeIds[selectedIndex];
+        const selectedMove = this.moves[selectedIndex];
+        return [selectedIndex, selectedId, selectedMove];
     }
 }
 
@@ -141,9 +167,8 @@ export class MCTS {
         this.nn = nn;
         this.terminateFlag = false;
         this.exitCondition = null;
-        if (evaluatePlugin instanceof Function) {
-            this.evaluatePlugin = evaluatePlugin;
-        }
+        this.evaluatePlugin = evaluatePlugin;
+        this.collisions = 0;
     }
 
     /**
@@ -183,6 +208,28 @@ export class MCTS {
     }
 
     /**
+     * this.nodesに同じ局面があればそのインデックスを返します。
+     * なければnullを返します。
+     * @param {Board} b 
+     */
+    getNodeIdInNodes(b) {
+        const hash = b.hash();
+        if (this.nodeHashes.has(hash)) {
+            const id = this.nodeHashes.get(hash);
+            if (b.moveNumber === this.nodes[id].moveNumber) {
+                if (!COLLISION_DETECT || b.toString() === this.nodes[id].position) {
+                    return id;
+                } else {
+                    this.collisions += 1;
+                    console.log('hash collision');
+                    b.showboard(false);
+                    console.log(this.nodes[id].position);
+                }
+            }
+        }
+        return null;
+    }
+    /**
      * 局面bのMCTSの探索ノードが既にあるか確認し、なければ生成してノードIDを返します。
      * @param {Board} b 
      * @param {Float32Array} prob 
@@ -200,7 +247,7 @@ export class MCTS {
         this.nodesLength += 1;
 
         const node = this.nodes[nodeId];
-        node.initialize(hash, b.moveNumber, candidates, prob);
+        node.initialize(hash, b.moveNumber, candidates, prob, b.toString());
         return nodeId;
     }
 
@@ -214,33 +261,10 @@ export class MCTS {
         for (let i = 0; i < NODES_MAX_LENGTH; i++) {
             const mn = this.nodes[i].moveNumber;
             if (mn >= 0 && mn < this.rootMoveNumber) {
-                this.nodeHashes.delete(this.nodes[i].hash);
+                this.nodeHashes.delete(this.nodes[i].hashValue);
                 this.nodes[i].clear();
             }
         }
-    }
-
-    /**
-     * UCB評価で最善の着手情報を返します。
-     * @param {Board} b 
-     * @param {Node} node 
-     * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
-     */
-    selectByUCB(b, node) {
-        const ndRate = node.totalCount === 0 ? 0.0 : node.totalValue / node.totalCount;
-        const cpsv = this.C_PUCT * Math.sqrt(node.totalCount);
-        const meanActionValues = new Float32Array(node.edgeLength);
-        for (let i = 0; i < meanActionValues.length; i++) {
-            meanActionValues[i] = node.visitCounts[i] === 0 ? ndRate : node.totalActionValues[i] / node.visitCounts[i];
-        }
-        const ucb = new Float32Array(node.edgeLength);
-        for (let i = 0; i < ucb.length; i++) {
-            ucb[i] = meanActionValues[i] + cpsv * node.probabilities[i] / (1 + node.visitCounts[i]);
-        }
-        const selectedIndex = argmax(ucb);
-        const selectedId = node.nodeIds[selectedIndex];
-        const selectedMove = node.moves[selectedIndex];
-        return [selectedIndex, selectedId, selectedMove];
     }
 
     /**
@@ -285,8 +309,10 @@ export class MCTS {
     hasEdgeNode(edgeIndex, nodeId, moveNumber) {
         const node = this.nodes[nodeId];
         const edgeId = node.nodeIds[edgeIndex];
-        return edgeId >= 0 &&
-            node.hashes[edgeIndex] === this.nodes[edgeId].hash &&
+        if (edgeId < 0) {
+            return false;
+        }
+        return node.hashes[edgeIndex] === this.nodes[edgeId].hashValue &&
             this.nodes[edgeId].moveNumber === moveNumber;
     }
 
@@ -375,14 +401,10 @@ export class MCTS {
      * @returns {Node}
      */
     async prepareRootNode(b) {
-        const hash = b.hash();
         this.rootMoveNumber = b.moveNumber;
         this.C_PUCT = this.rootMoveNumber < 8 ? 0.01 : 1.5;
-        if (this.nodeHashes.has(hash) &&
-            this.nodes[this.nodeHashes.get(hash)].hash === hash &&
-            this.nodes[this.nodeHashes.get(hash)].moveNumber === this.rootMoveNumber) {
-                this.rootId = this.nodeHashes.get(hash);
-        } else {
+        this.rootId = this.getNodeIdInNodes(b);
+        if (this.rootId == null) {
             const [prob] = await this.evaluate(b);
             this.rootId = this.createNode(b, prob);
         }
@@ -408,6 +430,16 @@ export class MCTS {
             this.cleanupNodes();
         }
         const nodeId = this.createNode(b, prob);
+        /*
+        if (!this.isConsistentNode(nodeId, b)) {
+            const node = this.nodes[nodeId];
+            for (let i = 0; i < node.edgeLength; i++) {
+                console.log(b.C.ev2str(node.moves[i]));
+            }
+            b.showboard();
+            throw new Error('inconsistent node');
+        }
+        */
         parentNode.nodeIds[edgeIndex] = nodeId;
         parentNode.hashes[edgeIndex] = b.hash();
         parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
@@ -424,8 +456,15 @@ export class MCTS {
      */
     async playout(b, nodeId) {
         const node = this.nodes[nodeId];
-        const [selectedIndex, selectedId, selectedMove] = this.selectByUCB(b, node);
-        b.play(selectedMove);
+        const [selectedIndex, selectedId, selectedMove] = node.selectByUCB(this.C_PUCT);
+        try {
+            b.play(selectedMove);
+        } catch (e) {
+            console.error(e);
+            b.showboard();
+            console.log('%s %d', b.C.ev2str(selectedMove), this.collisions);
+            b.play(b.C.PASS);
+        }
         const isHeadNode = !this.hasEdgeNode(selectedIndex, nodeId, b.moveNumber);
         /*
         // 以下はPyaqが採用したヘッドノードの条件です。
@@ -452,7 +491,6 @@ export class MCTS {
      * @param {Board} b 
      */
     async keepPlayout(b) {
-        this.evalCount = 0;
         let bCpy = new Board(b.C, b.komi);
         do {
             b.copyTo(bCpy);
@@ -483,23 +521,23 @@ export class MCTS {
 
         const time_ = (time === 0.0 ? this.getSearchTime(b.C) : time) * 1000 - 500; // 0.5秒のマージン
         this.terminateFlag = false;
-        this.exitCondition = ponder ? function() {
-            return this.terminateFlag;
-        } : function() {
-            return this.terminateFlag || Date.now() - start > time_;
-        };
+        this.exitCondition = ponder ? () => this.terminateFlag :
+            () => this.terminateFlag || Date.now() - start > time_;
 
         let [best, second] = rootNode.getSortedIndices();
+        this.evalCount = 0;
         if (ponder || this.shouldSearch(best, second)) {
             await this.keepPlayout(b);
             [best, second] = rootNode.getSortedIndices();
         }
 
         console.log(
-            '\nmove number=%d: left time=%s[sec] evaluated=%d',
+            '\nmove number=%d: left time=%s[sec] evaluated=%d collisions=%d',
             this.rootMoveNumber + 1,
             Math.max(this.leftTime - time, 0.0).toFixed(1),
-            this.evalCount);
+            this.evalCount,
+            this.collisions
+        );
         this.printInfo(this.rootId, b.C);
         this.leftTime = this.leftTime - (Date.now() - start) / 1000;
         return rootNode;
@@ -510,5 +548,25 @@ export class MCTS {
      */
     stop() {
         this.terminateFlag = true;
+    }
+
+    /**
+     * 
+     * @param {Integer} nodeId
+     * @param {Board} b 
+     */
+    isConsistentNode(nodeId, b) {
+        const node = this.nodes[nodeId];
+        for (let i = 0; i < node.edgeLength; i++) {
+            const ev = node.moves[i];
+            if (ev === b.C.EBVCNT) {
+                continue
+            }
+            if (b.state[ev] !== IntersectionState.EMPTY) {
+                console.log('isConsistentNode', b.C.ev2str(ev));
+                return false;
+            }
+        }
+        return true
     }
 }

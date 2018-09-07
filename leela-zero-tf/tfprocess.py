@@ -38,9 +38,13 @@ def bias_variable(shape):
     initial = tf.constant(0.0, shape=shape)
     return tf.Variable(initial)
 
-def conv2d(x, W, data_format='NCHW'):
-    return tf.nn.conv2d(x, W, data_format=data_format,
+def conv2d(x, W, data_format='NCHW', name=None):
+    if name is None:
+        return tf.nn.conv2d(x, W, data_format=data_format,
                         strides=[1, 1, 1, 1], padding='SAME')
+    else:
+        return tf.nn.conv2d(x, W, data_format=data_format,
+                        strides=[1, 1, 1, 1], padding='SAME', name=name)
 
 # Restore session from checkpoint. It silently ignore mis-matches
 # between the checkpoint and the graph. Specifically
@@ -104,12 +108,15 @@ class Timer:
 
 class TFProcess:
     def __init__(self):
-        # TesorFlow
+        # TensorFlow
         self.DATA_FORMAT = 'NCHW'
 
         # Basic parameters
         self.BOARD_SIZE = 19
         self.FEATURES = 18
+
+        # Input structure
+        self.INPUT_DIM = 1 # BOARD_SIZE*BOARD_SIZE, 2: (BOARD_SIZE, BOARD_SIZE)
 
         # Network structure
         self.RESIDUAL_FILTERS = 128
@@ -318,7 +325,12 @@ class TFProcess:
                 s = weights.shape.as_list()
                 shape = [s[i] for i in [1, 0]]
                 new_weight = tf.constant(new_weights[e], shape=shape)
-                self.assign(weights, tf.transpose(new_weight, [1, 0]))
+                new_weight = tf.transpose(new_weight, [1, 0])
+                if self.DATA_FORMAT == 'NHWC' and s[1] == self.BOARD_SIZE * self.BOARD_SIZE + 1:
+                    new_weight = tf.reshape(new_weight, [2, self.BOARD_SIZE * self.BOARD_SIZE, self.BOARD_SIZE * self.BOARD_SIZE + 1])
+                    new_weight = tf.transpose(new_weight, [1, 0, 2])
+                    new_weight = tf.reshape(new_weight, [2 * self.BOARD_SIZE * self.BOARD_SIZE, self.BOARD_SIZE * self.BOARD_SIZE + 1])
+                self.assign(weights, new_weight)
             else:
                 # Biases, batchnorm etc
                 new_weight = tf.constant(new_weights[e], shape=weights.shape)
@@ -470,7 +482,7 @@ class TFProcess:
         return net
 
 
-    def conv_block(self, inputs, filter_size, input_channels, output_channels):
+    def conv_block(self, inputs, filter_size, input_channels, output_channels, name=None):
         W_conv = weight_variable([filter_size, filter_size,
                                   input_channels, output_channels])
         self.weights.append(W_conv)
@@ -478,10 +490,14 @@ class TFProcess:
         net = inputs
         net = conv2d(net, W_conv, self.DATA_FORMAT)
         net = self.batch_norm(net)
-        net = tf.nn.relu(net)
+        if name is None:
+            net = tf.nn.relu(net)
+        else:
+            net = tf.nn.relu(net, name=name)
+            
         return net
 
-    def residual_block(self, inputs, channels):
+    def residual_block(self, inputs, channels, name=None):
         net = inputs
         orig = tf.identity(net)
 
@@ -500,33 +516,39 @@ class TFProcess:
         net = conv2d(net, W_conv_2, self.DATA_FORMAT)
         net = self.batch_norm(net)
         net = tf.add(net, orig)
-        net = tf.nn.relu(net)
+        if name is None:
+            net = tf.nn.relu(net)
+        else:
+            net = tf.nn.relu(net, name=name)
 
         return net
 
     def construct_net(self, planes):
-        if self.DATA_FORMAT == 'NCHW':
-            # NCHW format
-            # batch, 18 channels, 19 x 19
-            x_planes = tf.reshape(planes, [-1, self.FEATURES, self.BOARD_SIZE, self.BOARD_SIZE])
-        else:
-            x_planes = tf.reshape(planes, [-1, self.BOARD_SIZE, self.BOARD_SIZE, self.FEATURES])
+        if self.INPUT_DIM == 1:
+            if self.DATA_FORMAT == 'NCHW':
+                # NCHW format
+                # batch, 18 channels, 19 x 19
+                x_planes = tf.reshape(planes, [-1, self.FEATURES, self.BOARD_SIZE, self.BOARD_SIZE])
+            else:
+                x_planes = tf.reshape(planes, [-1, self.BOARD_SIZE, self.BOARD_SIZE, self.FEATURES])
+        elif self.INPUT_DIM == 2:
+            x_planes = planes
 
         # Input convolution
         flow = self.conv_block(x_planes, filter_size=3,
                                input_channels=self.FEATURES,
-                               output_channels=self.RESIDUAL_FILTERS)
+                               output_channels=self.RESIDUAL_FILTERS, name="conv0")
         # Residual tower
-        for _ in range(0, self.RESIDUAL_BLOCKS):
-            flow = self.residual_block(flow, self.RESIDUAL_FILTERS)
+        for i in range(0, self.RESIDUAL_BLOCKS):
+            flow = self.residual_block(flow, self.RESIDUAL_FILTERS, name="res" + str(i))
 
         # Policy head
         conv_pol = self.conv_block(flow, filter_size=1,
                                    input_channels=self.RESIDUAL_FILTERS,
-                                   output_channels=2)
-        if self.DATA_FORMAT == 'NHWC':
-            conv_pol = tf.transpose(conv_pol, [0, 3, 1, 2])
-        h_conv_pol_flat = tf.reshape(conv_pol, [-1, 2*self.BOARD_SIZE*self.BOARD_SIZE])
+                                   output_channels=2, name="conv_pol")
+
+        h_conv_pol_flat = tf.reshape(conv_pol, [-1, 2*self.BOARD_SIZE*self.BOARD_SIZE], name="flat")
+        self.debug = h_conv_pol_flat
         W_fc1 = weight_variable([2 * self.BOARD_SIZE * self.BOARD_SIZE, (self.BOARD_SIZE * self.BOARD_SIZE) + 1])
         b_fc1 = bias_variable([(self.BOARD_SIZE * self.BOARD_SIZE) + 1])
         self.weights.append(W_fc1)

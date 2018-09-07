@@ -41,16 +41,33 @@ export function mostCommon(array) {
     return argmax(map);
 }
 
-/** arrayをソートした時のインデックス配列を返します。
+/**
+ * arrayをソートした時のインデックス配列を返します。
+ * secondを与えると、arrayの値が等しい時、secondで比較します。
  * @param {number[]} array 
+ * @param {number[]} second 
  * @param {bool} reverse 
  */
-export function argsort(array, reverse) {
-    const indices = Array.from(array).map((e, i) => i);
-    if (reverse) {
-        return indices.sort((a, b) => array[b] - array[a]);
+export function argsort(array, reverse, second = null) {
+    const indices = array.map((e, i) => i);
+    if (second == null) {
+        if (reverse) {
+            return indices.sort((a, b) => array[b] - array[a]);
+        } else {
+            return indices.sort((a, b) => array[a] - array[b]);
+        }
     } else {
-        return indices.sort((a, b) => array[a] - array[b]);
+        if (reverse) {
+            return indices.sort((a, b) => {
+                const cmp = array[b] - array[a];
+                return cmp !== 0 ? cmp : second[b] - second[a];
+            });
+        } else {
+            return indices.sort((a, b) => {
+                const cmp = array[a] - array[b];
+                return cmp !== 0 ? cmp : second[a] - second[b];
+            });
+        }
     }
 }
 
@@ -69,22 +86,6 @@ export function argmax(obj) {
         }
     }
     return maxIndex;
-}
-
-/**
- * strの32-bitハッシュ値を返します。
- * (注)19路盤では32-bitハッシュ値は衝突すると言われていますが衝突には対応していません。
- * @param {string} str 
- * @returns {Integer}
- */
-export function hash(str) {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
-        hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
 }
 
 /**
@@ -111,7 +112,7 @@ export function softmax(input, temperature = 1.0) {
     return output;
 }
 
-export function printProb(prob, size) {
+export function printProb(prob, size = 19) {
     for (let y = 0; y < size; y++) {
         let str = `${y + 1} `;
         for (let x = 0; x < size; x++) {
@@ -120,4 +121,86 @@ export function printProb(prob, size) {
         console.log(str);
     }
     console.log('pass=%s', prob[prob.length - 1].toFixed(1));
+}
+
+/**
+ * 与えられた範囲の整数乱数を返します。
+ * 引数を省略すると符号付き32ビット整数の乱数を返します。
+ * @param {Integer} min
+ * @param {Integer} max
+ */
+export function random(min = -0x80000000, max = 0x7FFFFFFF) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/** 2要素配列をキーとするMapクラスです */
+export class TwoKeyMap {
+    constructor() {
+        this.map = new Map();
+    }
+    get size() {
+        let result = 0;
+        for (const e of this.map.values) {
+            result += e.size;
+        }
+        return result;
+    }
+    clear() {
+        this.map.clear();
+    }
+    delete(key) {
+        const map = this.map.get(key[0]);
+        if (map == null) {
+            return false;
+        }
+        return map.delete(key[1]);
+    }
+    entries() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const k0 of this.map.keys()) {
+            for (const e of this.map.get(k0).entries()) {
+                result.push([[k0, e[0]], e[1]]);
+            }
+        }
+        return result;
+    }
+    get(key) {
+        const map = this.map.get(key[0]);
+        return map == null ? undefined : map.get(key[1]);
+    }
+    has(key) {
+        return this.map.has(key[0]) && this.map.get(key[0]).has(key[1]);
+    }
+    keys() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const k0 of this.map.keys()) {
+            for (const k1 of this.map.get(k0).keys()) {
+                result.push([k0, k1]);
+            }
+        }
+        return result;
+    }
+    set(key, value) {
+        let map = this.map.get(key[0]);
+        if (map == null) {
+            map = new Map();
+            this.map.set(key[0], map);
+        }
+        map.set(key[1], value);
+    }
+    values() {
+        /* TODO: 現在、配列を返す。イテレータを返すようにする。 */
+        const result = [];
+        for (const map of this.map.values()) {
+            for (const v of map.values()) {
+                result.push(v);
+            }
+        }
+        return result;
+    }
+    toString() {
+        return this.entries().map(e => e.map(e => e.toString()).join(': ')).join('\n');
+    }
 }

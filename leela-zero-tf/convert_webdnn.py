@@ -26,15 +26,16 @@ if __name__ == "__main__":
     version, blocks, filters, weights = read_net(sys.argv[1])
 
     if data_format == 'NHWC':
-        planes = tf.placeholder(tf.float32, [None, BOARD_SIZE * BOARD_SIZE, FEATURES])
+        planes = tf.placeholder(tf.float32, [None, BOARD_SIZE, BOARD_SIZE, FEATURES])
         probs = tf.placeholder(tf.float32, [None, BOARD_SIZE * BOARD_SIZE + 1])
         winner = tf.placeholder(tf.float32, [None, 1])
     else:
-        planes = tf.placeholder(tf.float32, [None, FEATURES, BOARD_SIZE * BOARD_SIZE])
+        planes = tf.placeholder(tf.float32, [None, FEATURES, BOARD_SIZE, BOARD_SIZE])
         probs = tf.placeholder(tf.float32, [None, BOARD_SIZE * BOARD_SIZE + 1])
         winner = tf.placeholder(tf.float32, [None, 1])
 
     tfprocess = TFProcess()
+    tfprocess.INPUT_DIM = 2
     tfprocess.DATA_FORMAT = data_format
     tfprocess.BOARD_SIZE = BOARD_SIZE
     tfprocess.FEATURES = FEATURES

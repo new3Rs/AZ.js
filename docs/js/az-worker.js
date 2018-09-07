@@ -406,12 +406,107 @@
   }
 
   /**
-   * @file 碁盤の定数クラスです
+   * @file 各種ユーティリティ関数群です。
    */
   /*
-   * @author 市川雄二 
+   * @author 市川雄二
    * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
    * @license MIT
+   */
+
+  /**
+   * @param {Array} array
+   */
+  function shuffle(array) {
+      let n = array.length;
+      let t;
+      let i;
+
+      while (n) {
+          i = Math.floor(Math.random() * n--);
+          t = array[n];
+          array[n] = array[i];
+          array[i] = t;
+      }
+
+      return array;
+  }
+
+  /**
+   * arrayの中の最頻出要素を返します。
+   * @param {Array} array 
+   */
+  function mostCommon(array) {
+      const map = new Map();
+      for (const e of array) {
+          if (map.has(e)) {
+              map.set(e, map.get(e) + 1);
+          } else {
+              map.set(e, 1);
+          }
+      }
+      return argmax(map);
+  }
+
+  /**
+   * arrayをソートした時のインデックス配列を返します。
+   * secondを与えると、arrayの値が等しい時、secondで比較します。
+   * @param {number[]} array 
+   * @param {number[]} second 
+   * @param {bool} reverse 
+   */
+  function argsort(array, reverse, second = null) {
+      const indices = array.map((e, i) => i);
+      if (second == null) {
+          if (reverse) {
+              return indices.sort((a, b) => array[b] - array[a]);
+          } else {
+              return indices.sort((a, b) => array[a] - array[b]);
+          }
+      } else {
+          if (reverse) {
+              return indices.sort((a, b) => {
+                  const cmp = array[b] - array[a];
+                  return cmp !== 0 ? cmp : second[b] - second[a];
+              });
+          } else {
+              return indices.sort((a, b) => {
+                  const cmp = array[a] - array[b];
+                  return cmp !== 0 ? cmp : second[a] - second[b];
+              });
+          }
+      }
+  }
+
+  /**
+   * objの中の最大値のキーを返します。
+   * 配列にもMapインスタンスにも使えます。
+   * @param {Object} obj 
+   */
+  function argmax(obj) {
+      let maxIndex;
+      let maxValue = -Infinity;
+      for (const [i, v] of obj.entries()) {
+          if (v > maxValue) {
+              maxIndex = i;
+              maxValue = v;
+          }
+      }
+      return maxIndex;
+  }
+
+  /**
+   * 与えられた範囲の整数乱数を返します。
+   * 引数を省略すると符号付き32ビット整数の乱数を返します。
+   * @param {Integer} min
+   * @param {Integer} max
+   */
+  function random(min = -0x80000000, max = 0x7FFFFFFF) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  /**
+   * @file 碁盤の定数クラスです
    */
 
   /** x座標ラベル文字列です。 */
@@ -480,7 +575,9 @@
           this.VNULL = this.EBVCNT + 1;
           this.BVCNT = this.BSIZE * this.BSIZE;
           this.symmetricRawVertex = new Uint16Array(this.BVCNT * 8);
+          this.ZobristHashes = [new Int32Array(this.EBVCNT + 1), new Int32Array(this.EBVCNT + 1)];
           this.initializeSymmetricRawVertex();
+          this.initializeZobristHashes();
           Object.freeze(this);
       }
 
@@ -638,95 +735,15 @@
           }
           return x + center + (y + center) * this.BSIZE;
       }
-  }
 
-  /**
-   * @file 各種ユーティリティ関数群です。
-   */
-  /*
-   * @author 市川雄二
-   * @copyright 2018 ICHIKAWA, Yuji (New 3 Rs)
-   * @license MIT
-   */
-
-  /**
-   * @param {Array} array
-   */
-  function shuffle(array) {
-      let n = array.length;
-      let t;
-      let i;
-
-      while (n) {
-          i = Math.floor(Math.random() * n--);
-          t = array[n];
-          array[n] = array[i];
-          array[i] = t;
-      }
-
-      return array;
-  }
-
-  /**
-   * arrayの中の最頻出要素を返します。
-   * @param {Array} array 
-   */
-  function mostCommon(array) {
-      const map = new Map();
-      for (const e of array) {
-          if (map.has(e)) {
-              map.set(e, map.get(e) + 1);
-          } else {
-              map.set(e, 1);
+      initializeZobristHashes() {
+          for (let turn = 0; turn < this.ZobristHashes.length; turn++) {
+              const hashes = this.ZobristHashes[turn];
+              for (let i = 0; i < hashes.length; i++) {
+                  hashes[i] = random();
+              }
           }
       }
-      return argmax(map);
-  }
-
-  /** arrayをソートした時のインデックス配列を返します。
-   * @param {number[]} array 
-   * @param {bool} reverse 
-   */
-  function argsort(array, reverse) {
-      const indices = Array.from(array).map((e, i) => i);
-      if (reverse) {
-          return indices.sort((a, b) => array[b] - array[a]);
-      } else {
-          return indices.sort((a, b) => array[a] - array[b]);
-      }
-  }
-
-  /**
-   * objの中の最大値のキーを返します。
-   * 配列にもMapインスタンスにも使えます。
-   * @param {Object} obj 
-   */
-  function argmax(obj) {
-      let maxIndex;
-      let maxValue = -Infinity;
-      for (const [i, v] of obj.entries()) {
-          if (v > maxValue) {
-              maxIndex = i;
-              maxValue = v;
-          }
-      }
-      return maxIndex;
-  }
-
-  /**
-   * strの32-bitハッシュ値を返します。
-   * (注)19路盤では32-bitハッシュ値は衝突すると言われていますが衝突には対応していません。
-   * @param {string} str 
-   * @returns {Integer}
-   */
-  function hash(str) {
-      let hash = 5381;
-      for (let i = 0; i < str.length; i++) {
-          const char = str.charCodeAt(i);
-          hash = ((hash << 5) + hash) + char; /* hash * 33 + c */
-          hash = hash & hash; // Convert to 32bit integer
-      }
-      return hash;
   }
 
   /**
@@ -877,6 +894,7 @@
           this.prevMove = this.C.VNULL;
           this.removeCnt = 0;
           this.history = [];
+          this.hashValue = 0x87654321;
           this.reset();
       }
 
@@ -906,6 +924,7 @@
           this.prevMove = this.C.VNULL;
           this.removeCnt = 0;
           this.history = [];
+          this.hashValue = 0x87654321;
       }
 
       /**
@@ -927,12 +946,14 @@
           dest.turn = this.turn;
           dest.moveNumber = this.moveNumber;
           dest.removeCnt = this.removeCnt;
-          dest.history = Array.from(this.history);
+          dest.history = this.history.slice();
+          dest.hashValue = this.hashValue;
       }
 
       /**
        * 拡張線形座標の配列を受け取って順に着手します。
        * @param {Uin16[]} sequence 
+       * @throws {Error}
        */
       playSequence(sequence) {
           for (const v of sequence) {
@@ -1092,13 +1113,14 @@
        * 交点vに着手します。
        * @param {*} v 拡張線形座標
        * @param {*} notFillEye 眼を潰すことを許可しない
+       * @throws {Error}
        */
       play(v, notFillEye = false) {
           if (!this.legal(v)) {
-              return false;
+              throw new Error('illegal move');
           }
           if (notFillEye && this.eyeshape(v, this.turn)) {
-              return false;
+              throw new Error('eye-fill move');
           }
           for (let i = KEEP_PREV_CNT - 2; i >= 0; i--) {
               this.prevState[i + 1] = this.prevState[i];
@@ -1116,9 +1138,17 @@
           }
           this.prevMove = v;
           this.history.push(v);
+          this.hashValue ^= this.C.ZobristHashes[this.turn][v];
           this.turn = IntersectionState.opponentOf(this.turn);
           this.moveNumber += 1;
-          return true;
+      }
+
+      /**
+       * ハッシュ値を返します。
+       * @returns {number}
+       */
+      hash() {
+          return this.hashValue + this.ko;
       }
 
       /**
@@ -1134,11 +1164,12 @@
           }
           shuffle(emptyList);
           for (const v of emptyList) {
-              if (this.play(v, true)) {
+              try {
+                  this.play(v, true);
                   return v;
-              }
+              } catch (e) {}
           }
-          this.play(this.C.PASS, true);
+          this.play(this.C.PASS);
           return this.C.PASS;
       }
 
@@ -1198,23 +1229,8 @@
           }
       }
 
-      /**
-       * 碁盤のx軸ラベルを表示します。
-       * @private
-       */
-      printXlabel() {
-          let lineStr = '  ';
-          for (let x = 1; x <= this.C.BSIZE; x++) {
-              lineStr += ` ${X_LABELS[x]} `;
-          }
-          console.log(lineStr);
-      }
-
-      /**
-       * 碁盤をコンソールに出力します。
-       */
-      showboard() {
-          this.printXlabel();
+      toString(mark = false) {
+          let result = this.xLabel();
           for (let y = this.C.BSIZE; y > 0; y--) {
               let lineStr = (' ' + y.toString()).slice(-2);
               for (let x = 1; x <= this.C.BSIZE; x++) {
@@ -1222,10 +1238,10 @@
                   let xStr;
                   switch (this.state[v]) {
                       case IntersectionState.BLACK:
-                      xStr = v === this.prevMove ? '[X]' : ' X ';
+                      xStr = mark && v === this.prevMove ? '[X]' : ' X ';
                       break;
                       case IntersectionState.WHITE:
-                      xStr = v === this.prevMove ? '[O]' : ' O ';
+                      xStr = mark && v === this.prevMove ? '[O]' : ' O ';
                       break;
                       case IntersectionState.EMPTY:
                       xStr = ' . ';
@@ -1236,19 +1252,29 @@
                   lineStr += xStr;
               }
               lineStr += (' ' + y.toString()).slice(-2);
-              console.log(lineStr);
+              result += lineStr + '\n';
           }
-          this.printXlabel();
-          console.log('');
+          result += this.xLabel();
+          return result;
       }
 
       /**
-       * 現在の局面のハッシュ値を返します。
-       * (注)手数情報は含みません。なので比較にはハッシュ値と手数両方を使います。
-       * @returns {Integer}
+       * toStringのヘルパーメソッドです。
+       * @private
        */
-      hash() {
-          return hash((this.state.toString() + this.prevState[0].toString() + this.turn.toString()).replace(',', ''));
+      xLabel() {
+          let lineStr = '  ';
+          for (let x = 1; x <= this.C.BSIZE; x++) {
+              lineStr += ` ${X_LABELS[x]} `;
+          }
+          return lineStr + '\n';
+      }
+
+      /**
+       * 碁盤をコンソールに出力します。
+       */
+      showboard(mark) {
+          console.log(this.toString(mark));
       }
 
       /**
@@ -1334,8 +1360,8 @@
        * @param {bool} random
        * @returns {Float32Array[]}
        */
-      async evaluate(nn, random = true) {
-          const symmetry = random ? Math.floor(Math.random() * 8) : 0;
+      async evaluate(nn, randomSymmetry = true) {
+          const symmetry = randomSymmetry ? random(0, 7) : 0;
           let [prob, value] = await nn.evaluate(this.feature(symmetry));
           if (symmetry !== 0) {
               const p = new Float32Array(prob.length);
@@ -1356,7 +1382,6 @@
    */
 
   const NODES_MAX_LENGTH = 16384;
-
 
   /** MCTSのノードクラスです。 */
   class Node {
@@ -1387,9 +1412,10 @@
           this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
           this.totalValue = 0.0;
           this.totalCount = 0;
-          this.hash = 0;
+          this.hashValue = 0;
           this.moveNumber = -1;
           this.sortedIndices = null;
+          this.position = null;
           this.clear();
       }
 
@@ -1398,9 +1424,10 @@
           this.edgeLength = 0;
           this.totalValue = 0.0;
           this.totalCount = 0;
-          this.hash = 0;
+          this.hashValue = 0;
           this.moveNumber = -1;
           this.sortedIndices = null;
+          this.position = null;
       }
 
       /**
@@ -1410,10 +1437,11 @@
        * @param {UInt16[]} candidates Boardが生成する候補手情報です。
        * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
        */
-      initialize(hash$$1, moveNumber, candidates, prob) {
+      initialize(hash, moveNumber, candidates, prob, position = null) {
           this.clear();
-          this.hash = hash$$1;
+          this.hashValue = hash;
           this.moveNumber = moveNumber;
+          this.position = position;
 
           for (const rv of argsort(prob, true)) {
               if (candidates.includes(rv)) {
@@ -1453,9 +1481,31 @@
        */
       getSortedIndices() {
           if (this.sortedIndices == null) {
-              this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true);
+              this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true, this.values.slice(0, this.edgeLength));
           }
           return this.sortedIndices;
+      }
+
+
+      /**
+       * UCB評価で最善の着手情報を返します。
+       * @param {number} c_puct
+       * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
+       */
+      selectByUCB(c_puct) {
+          const cpsv = c_puct * Math.sqrt(this.totalCount);
+          const meanActionValues = new Float32Array(this.edgeLength);
+          for (let i = 0; i < meanActionValues.length; i++) {
+              meanActionValues[i] = this.visitCounts[i] === 0 ? 0 : this.totalActionValues[i] / this.visitCounts[i];
+          }
+          const ucb = new Float32Array(this.edgeLength);
+          for (let i = 0; i < ucb.length; i++) {
+              ucb[i] = meanActionValues[i] + cpsv * this.probabilities[i] / (1 + this.visitCounts[i]);
+          }
+          const selectedIndex = argmax(ucb);
+          const selectedId = this.nodeIds[selectedIndex];
+          const selectedMove = this.moves[selectedIndex];
+          return [selectedIndex, selectedId, selectedMove];
       }
   }
 
@@ -1484,9 +1534,8 @@
           this.nn = nn;
           this.terminateFlag = false;
           this.exitCondition = null;
-          if (evaluatePlugin instanceof Function) {
-              this.evaluatePlugin = evaluatePlugin;
-          }
+          this.evaluatePlugin = evaluatePlugin;
+          this.collisions = 0;
       }
 
       /**
@@ -1526,6 +1575,28 @@
       }
 
       /**
+       * this.nodesに同じ局面があればそのインデックスを返します。
+       * なければnullを返します。
+       * @param {Board} b 
+       */
+      getNodeIdInNodes(b) {
+          const hash = b.hash();
+          if (this.nodeHashes.has(hash)) {
+              const id = this.nodeHashes.get(hash);
+              if (b.moveNumber === this.nodes[id].moveNumber) {
+                  if (b.toString() === this.nodes[id].position) {
+                      return id;
+                  } else {
+                      this.collisions += 1;
+                      console.log('hash collision');
+                      b.showboard(false);
+                      console.log(this.nodes[id].position);
+                  }
+              }
+          }
+          return null;
+      }
+      /**
        * 局面bのMCTSの探索ノードが既にあるか確認し、なければ生成してノードIDを返します。
        * @param {Board} b 
        * @param {Float32Array} prob 
@@ -1533,17 +1604,17 @@
        */
       createNode(b, prob) {
           const candidates = b.candidates();
-          const hash$$1 = b.hash();
-          let nodeId = Math.abs(hash$$1) % NODES_MAX_LENGTH;
+          const hash = b.hash();
+          let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
               nodeId = nodeId + 1 < NODES_MAX_LENGTH ? nodeId + 1 : 0;
           }
 
-          this.nodeHashes.set(hash$$1, nodeId);
+          this.nodeHashes.set(hash, nodeId);
           this.nodesLength += 1;
 
           const node = this.nodes[nodeId];
-          node.initialize(hash$$1, b.moveNumber, candidates, prob);
+          node.initialize(hash, b.moveNumber, candidates, prob, b.toString());
           return nodeId;
       }
 
@@ -1557,33 +1628,10 @@
           for (let i = 0; i < NODES_MAX_LENGTH; i++) {
               const mn = this.nodes[i].moveNumber;
               if (mn >= 0 && mn < this.rootMoveNumber) {
-                  this.nodeHashes.delete(this.nodes[i].hash);
+                  this.nodeHashes.delete(this.nodes[i].hashValue);
                   this.nodes[i].clear();
               }
           }
-      }
-
-      /**
-       * UCB評価で最善の着手情報を返します。
-       * @param {Board} b 
-       * @param {Node} node 
-       * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
-       */
-      selectByUCB(b, node) {
-          const ndRate = node.totalCount === 0 ? 0.0 : node.totalValue / node.totalCount;
-          const cpsv = this.C_PUCT * Math.sqrt(node.totalCount);
-          const meanActionValues = new Float32Array(node.edgeLength);
-          for (let i = 0; i < meanActionValues.length; i++) {
-              meanActionValues[i] = node.visitCounts[i] === 0 ? ndRate : node.totalActionValues[i] / node.visitCounts[i];
-          }
-          const ucb = new Float32Array(node.edgeLength);
-          for (let i = 0; i < ucb.length; i++) {
-              ucb[i] = meanActionValues[i] + cpsv * node.probabilities[i] / (1 + node.visitCounts[i]);
-          }
-          const selectedIndex = argmax(ucb);
-          const selectedId = node.nodeIds[selectedIndex];
-          const selectedMove = node.moves[selectedIndex];
-          return [selectedIndex, selectedId, selectedMove];
       }
 
       /**
@@ -1628,8 +1676,10 @@
       hasEdgeNode(edgeIndex, nodeId, moveNumber) {
           const node = this.nodes[nodeId];
           const edgeId = node.nodeIds[edgeIndex];
-          return edgeId >= 0 &&
-              node.hashes[edgeIndex] === this.nodes[edgeId].hash &&
+          if (edgeId < 0) {
+              return false;
+          }
+          return node.hashes[edgeIndex] === this.nodes[edgeId].hashValue &&
               this.nodes[edgeId].moveNumber === moveNumber;
       }
 
@@ -1703,8 +1753,8 @@
        * @param {bool} random
        * @returns {Float32Array[]}
        */
-      async evaluate(b, random = true) {
-          let [prob, value] = await b.evaluate(this.nn, random);
+      async evaluate(b, random$$1 = true) {
+          let [prob, value] = await b.evaluate(this.nn, random$$1);
           if (this.evaluatePlugin) {
               prob = this.evaluatePlugin(b, prob);
           }
@@ -1718,14 +1768,10 @@
        * @returns {Node}
        */
       async prepareRootNode(b) {
-          const hash$$1 = b.hash();
           this.rootMoveNumber = b.moveNumber;
           this.C_PUCT = this.rootMoveNumber < 8 ? 0.01 : 1.5;
-          if (this.nodeHashes.has(hash$$1) &&
-              this.nodes[this.nodeHashes.get(hash$$1)].hash === hash$$1 &&
-              this.nodes[this.nodeHashes.get(hash$$1)].moveNumber === this.rootMoveNumber) {
-                  this.rootId = this.nodeHashes.get(hash$$1);
-          } else {
+          this.rootId = this.getNodeIdInNodes(b);
+          if (this.rootId == null) {
               const [prob] = await this.evaluate(b);
               this.rootId = this.createNode(b, prob);
           }
@@ -1751,6 +1797,16 @@
               this.cleanupNodes();
           }
           const nodeId = this.createNode(b, prob);
+          /*
+          if (!this.isConsistentNode(nodeId, b)) {
+              const node = this.nodes[nodeId];
+              for (let i = 0; i < node.edgeLength; i++) {
+                  console.log(b.C.ev2str(node.moves[i]));
+              }
+              b.showboard();
+              throw new Error('inconsistent node');
+          }
+          */
           parentNode.nodeIds[edgeIndex] = nodeId;
           parentNode.hashes[edgeIndex] = b.hash();
           parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
@@ -1767,8 +1823,15 @@
        */
       async playout(b, nodeId) {
           const node = this.nodes[nodeId];
-          const [selectedIndex, selectedId, selectedMove] = this.selectByUCB(b, node);
-          b.play(selectedMove);
+          const [selectedIndex, selectedId, selectedMove] = node.selectByUCB(this.C_PUCT);
+          try {
+              b.play(selectedMove);
+          } catch (e) {
+              console.error(e);
+              b.showboard();
+              console.log('%s %d', b.C.ev2str(selectedMove), this.collisions);
+              b.play(b.C.PASS);
+          }
           const isHeadNode = !this.hasEdgeNode(selectedIndex, nodeId, b.moveNumber);
           /*
           // 以下はPyaqが採用したヘッドノードの条件です。
@@ -1795,7 +1858,6 @@
        * @param {Board} b 
        */
       async keepPlayout(b) {
-          this.evalCount = 0;
           let bCpy = new Board(b.C, b.komi);
           do {
               b.copyTo(bCpy);
@@ -1826,23 +1888,23 @@
 
           const time_ = (time === 0.0 ? this.getSearchTime(b.C) : time) * 1000 - 500; // 0.5秒のマージン
           this.terminateFlag = false;
-          this.exitCondition = ponder ? function() {
-              return this.terminateFlag;
-          } : function() {
-              return this.terminateFlag || Date.now() - start > time_;
-          };
+          this.exitCondition = ponder ? () => this.terminateFlag :
+              () => this.terminateFlag || Date.now() - start > time_;
 
           let [best, second] = rootNode.getSortedIndices();
+          this.evalCount = 0;
           if (ponder || this.shouldSearch(best, second)) {
               await this.keepPlayout(b);
               [best, second] = rootNode.getSortedIndices();
           }
 
           console.log(
-              '\nmove number=%d: left time=%s[sec] evaluated=%d',
+              '\nmove number=%d: left time=%s[sec] evaluated=%d collisions=%d',
               this.rootMoveNumber + 1,
               Math.max(this.leftTime - time, 0.0).toFixed(1),
-              this.evalCount);
+              this.evalCount,
+              this.collisions
+          );
           this.printInfo(this.rootId, b.C);
           this.leftTime = this.leftTime - (Date.now() - start) / 1000;
           return rootNode;
@@ -1853,6 +1915,26 @@
        */
       stop() {
           this.terminateFlag = true;
+      }
+
+      /**
+       * 
+       * @param {Integer} nodeId
+       * @param {Board} b 
+       */
+      isConsistentNode(nodeId, b) {
+          const node = this.nodes[nodeId];
+          for (let i = 0; i < node.edgeLength; i++) {
+              const ev = node.moves[i];
+              if (ev === b.C.EBVCNT) {
+                  continue
+              }
+              if (b.state[ev] !== IntersectionState.EMPTY) {
+                  console.log('isConsistentNode', b.C.ev2str(ev));
+                  return false;
+              }
+          }
+          return true
       }
   }
 
@@ -1954,12 +2036,14 @@
           if (winRate < 0.01) {
               return ['resign', winRate];
           }
-          if (this.b.play(move)) {
+          try {
+              this.b.play(move);
               return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+          } catch (e) {
+              this.b.showboard();
+              console.log(this.b.candidates());
+              throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
           }
-          this.b.showboard();
-          console.log(this.b.candidates());
-          throw new Error(`illegal move ${this.b.C.ev2xy(move)}(${move})`);
       }
 
       /**
@@ -1967,6 +2051,7 @@
        * (x, y)は左上が1-オリジンの2次元座標です。
        * @param {Integer} x 
        * @param {Integer} y 
+       * @throws {Error}
        */
       play(x, y) {
           this.b.play(this.b.C.xy2ev(x, y));

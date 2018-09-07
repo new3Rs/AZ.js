@@ -18,9 +18,7 @@ describe('BaseBoard', function() {
         do {
             node = node._children[0];
             const p = coord2point(node.B || node.W);
-            if (!b.play(b.C.xy2ev(p[0], size + 1 - p[1]), true)) {
-                throw new Error('error');
-            }
+            b.play(b.C.xy2ev(p[0], size + 1 - p[1]), true)
             b.showboard();
         } while (node._children.length > 0);
     });
