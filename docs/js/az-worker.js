@@ -448,16 +448,33 @@
       return argmax(map);
   }
 
-  /** arrayをソートした時のインデックス配列を返します。
+  /**
+   * arrayをソートした時のインデックス配列を返します。
+   * secondを与えると、arrayの値が等しい時、secondで比較します。
    * @param {number[]} array 
+   * @param {number[]} second 
    * @param {bool} reverse 
    */
-  function argsort(array, reverse) {
+  function argsort(array, reverse, second = null) {
       const indices = array.map((e, i) => i);
-      if (reverse) {
-          return indices.sort((a, b) => array[b] - array[a]);
+      if (second == null) {
+          if (reverse) {
+              return indices.sort((a, b) => array[b] - array[a]);
+          } else {
+              return indices.sort((a, b) => array[a] - array[b]);
+          }
       } else {
-          return indices.sort((a, b) => array[a] - array[b]);
+          if (reverse) {
+              return indices.sort((a, b) => {
+                  const cmp = array[b] - array[a];
+                  return cmp !== 0 ? cmp : second[b] - second[a];
+              });
+          } else {
+              return indices.sort((a, b) => {
+                  const cmp = array[a] - array[b];
+                  return cmp !== 0 ? cmp : second[a] - second[b];
+              });
+          }
       }
   }
 
@@ -1464,9 +1481,31 @@
        */
       getSortedIndices() {
           if (this.sortedIndices == null) {
-              this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true);
+              this.sortedIndices = argsort(this.visitCounts.slice(0, this.edgeLength), true, this.values.slice(0, this.edgeLength));
           }
           return this.sortedIndices;
+      }
+
+
+      /**
+       * UCB評価で最善の着手情報を返します。
+       * @param {number} c_puct
+       * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
+       */
+      selectByUCB(c_puct) {
+          const cpsv = c_puct * Math.sqrt(this.totalCount);
+          const meanActionValues = new Float32Array(this.edgeLength);
+          for (let i = 0; i < meanActionValues.length; i++) {
+              meanActionValues[i] = this.visitCounts[i] === 0 ? 0 : this.totalActionValues[i] / this.visitCounts[i];
+          }
+          const ucb = new Float32Array(this.edgeLength);
+          for (let i = 0; i < ucb.length; i++) {
+              ucb[i] = meanActionValues[i] + cpsv * this.probabilities[i] / (1 + this.visitCounts[i]);
+          }
+          const selectedIndex = argmax(ucb);
+          const selectedId = this.nodeIds[selectedIndex];
+          const selectedMove = this.moves[selectedIndex];
+          return [selectedIndex, selectedId, selectedMove];
       }
   }
 
@@ -1593,29 +1632,6 @@
                   this.nodes[i].clear();
               }
           }
-      }
-
-      /**
-       * UCB評価で最善の着手情報を返します。
-       * @param {Board} b 
-       * @param {Node} node 
-       * @returns {Array} [UCB選択インデックス, 最善ブランチの子ノードID, 着手]
-       */
-      selectByUCB(b, node) {
-          const ndRate = node.totalCount === 0 ? 0.0 : node.totalValue / node.totalCount;
-          const cpsv = this.C_PUCT * Math.sqrt(node.totalCount);
-          const meanActionValues = new Float32Array(node.edgeLength);
-          for (let i = 0; i < meanActionValues.length; i++) {
-              meanActionValues[i] = node.visitCounts[i] === 0 ? ndRate : node.totalActionValues[i] / node.visitCounts[i];
-          }
-          const ucb = new Float32Array(node.edgeLength);
-          for (let i = 0; i < ucb.length; i++) {
-              ucb[i] = meanActionValues[i] + cpsv * node.probabilities[i] / (1 + node.visitCounts[i]);
-          }
-          const selectedIndex = argmax(ucb);
-          const selectedId = node.nodeIds[selectedIndex];
-          const selectedMove = node.moves[selectedIndex];
-          return [selectedIndex, selectedId, selectedMove];
       }
 
       /**
@@ -1807,7 +1823,7 @@
        */
       async playout(b, nodeId) {
           const node = this.nodes[nodeId];
-          const [selectedIndex, selectedId, selectedMove] = this.selectByUCB(b, node);
+          const [selectedIndex, selectedId, selectedMove] = node.selectByUCB(this.C_PUCT);
           try {
               b.play(selectedMove);
           } catch (e) {
@@ -1842,7 +1858,6 @@
        * @param {Board} b 
        */
       async keepPlayout(b) {
-          this.evalCount = 0;
           let bCpy = new Board(b.C, b.komi);
           do {
               b.copyTo(bCpy);
@@ -1877,6 +1892,7 @@
               () => this.terminateFlag || Date.now() - start > time_;
 
           let [best, second] = rootNode.getSortedIndices();
+          this.evalCount = 0;
           if (ponder || this.shouldSearch(best, second)) {
               await this.keepPlayout(b);
               [best, second] = rootNode.getSortedIndices();

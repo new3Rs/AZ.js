@@ -41,16 +41,33 @@ export function mostCommon(array) {
     return argmax(map);
 }
 
-/** arrayをソートした時のインデックス配列を返します。
+/**
+ * arrayをソートした時のインデックス配列を返します。
+ * secondを与えると、arrayの値が等しい時、secondで比較します。
  * @param {number[]} array 
+ * @param {number[]} second 
  * @param {bool} reverse 
  */
-export function argsort(array, reverse) {
+export function argsort(array, reverse, second = null) {
     const indices = array.map((e, i) => i);
-    if (reverse) {
-        return indices.sort((a, b) => array[b] - array[a]);
+    if (second == null) {
+        if (reverse) {
+            return indices.sort((a, b) => array[b] - array[a]);
+        } else {
+            return indices.sort((a, b) => array[a] - array[b]);
+        }
     } else {
-        return indices.sort((a, b) => array[a] - array[b]);
+        if (reverse) {
+            return indices.sort((a, b) => {
+                const cmp = array[b] - array[a];
+                return cmp !== 0 ? cmp : second[b] - second[a];
+            });
+        } else {
+            return indices.sort((a, b) => {
+                const cmp = array[a] - array[b];
+                return cmp !== 0 ? cmp : second[a] - second[b];
+            });
+        }
     }
 }
 
