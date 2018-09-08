@@ -43,7 +43,6 @@ class Node {
         this.hashes = new Int32Array(this.C.BVCNT + 1);
         /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
         this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
-        this.totalValue = 0.0;
         this.totalCount = 0;
         this.hashValue = 0;
         this.moveNumber = -1;
@@ -55,7 +54,6 @@ class Node {
     /** 未使用状態にします。 */
     clear() {
         this.edgeLength = 0;
-        this.totalValue = 0.0;
         this.totalCount = 0;
         this.hashValue = 0;
         this.moveNumber = -1;
@@ -391,6 +389,7 @@ export class MCTS {
         if (this.evaluatePlugin) {
             prob = this.evaluatePlugin(b, prob);
         }
+        this.evalCount += 1;
         return [prob, value];
     }
 
@@ -422,7 +421,6 @@ export class MCTS {
      */
     async evaluateEdge(b, edgeIndex, parentNode) {
         let [prob, value] = await this.evaluate(b);
-        this.evalCount += 1;
         value = -value[0]; // parentNodeの手番から見たバリューに変換します。
         parentNode.values[edgeIndex] = value;
         parentNode.evaluated[edgeIndex] = true;
@@ -430,6 +428,8 @@ export class MCTS {
             this.cleanupNodes();
         }
         const nodeId = this.createNode(b, prob);
+        parentNode.nodeIds[edgeIndex] = nodeId;
+        parentNode.hashes[edgeIndex] = b.hash();
         /*
         if (!this.isConsistentNode(nodeId, b)) {
             const node = this.nodes[nodeId];
@@ -440,10 +440,6 @@ export class MCTS {
             throw new Error('inconsistent node');
         }
         */
-        parentNode.nodeIds[edgeIndex] = nodeId;
-        parentNode.hashes[edgeIndex] = b.hash();
-        parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
-        parentNode.totalCount += parentNode.visitCounts[edgeIndex];
         return value;
     }
 
@@ -473,12 +469,16 @@ export class MCTS {
             b.moveNumber > b.C.BVCNT * 2 ||
             (selectedMove === b.C.PASS && b.prevMove === b.C.PASS);
         */
-        const value = isHeadNode ?
-            (node.evaluated[selectedIndex] ?
-                node.values[selectedIndex] :
-                await this.evaluateEdge(b, selectedIndex, node)) :
-            - await this.playout(b, selectedId); // selectedIdの手番でのバリューが返されるから符号を反転させます。
-        node.totalValue += value;
+        let value;
+        if (isHeadNode) {
+            if (node.evaluated[selectedIndex]) {
+                value = node.values[selectedIndex];
+            } else {
+                value = await this.evaluateEdge(b, selectedIndex, node);
+            }
+        } else {
+            value = - await this.playout(b, selectedId); // selectedIdの手番でのバリューが返されるから符号を反転させます。
+        }
         node.totalCount += 1;
         node.totalActionValues[selectedIndex] += value;
         node.incrementVisitCount(selectedIndex);
@@ -509,6 +509,7 @@ export class MCTS {
      */
     async search(b, time, ponder) {
         const start = Date.now();
+        this.evalCount = 0;
         const rootNode = await this.prepareRootNode(b);
 
         if (rootNode.edgeLength <= 1) { // 候補手がパスしかなければ
@@ -525,7 +526,6 @@ export class MCTS {
             () => this.terminateFlag || Date.now() - start > time_;
 
         let [best, second] = rootNode.getSortedIndices();
-        this.evalCount = 0;
         if (ponder || this.shouldSearch(best, second)) {
             await this.keepPlayout(b);
             [best, second] = rootNode.getSortedIndices();
