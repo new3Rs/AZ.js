@@ -1516,7 +1516,7 @@
        * @param {Function} evaluatePlugin
        */
       constructor(nn, C, evaluatePlugin = null) {
-          this.C_PUCT = 0.01;
+          this.C_PUCT = 5.0; // AlphaGo Hui論文より。AlphaGo Zeroがこの値を使ったかは不明。
           this.mainTime = 0.0;
           this.byoyomi = 1.0;
           this.leftTime = 0.0;
@@ -1796,7 +1796,6 @@
        */
       async prepareRootNode(b) {
           this.rootMoveNumber = b.moveNumber;
-          this.C_PUCT = this.rootMoveNumber < 8 ? 0.01 : 1.5;
           this.rootId = this.getNodeIdInNodes(b);
           if (this.rootId == null) {
               const [prob] = await this.evaluate(b);

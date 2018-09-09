@@ -71,7 +71,6 @@ class Node {
         this.hashes = new Int32Array(this.C.BVCNT + 1);
         /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
         this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
-        this.totalValue = 0.0;
         this.totalCount = 0;
         this.hashValue = 0;
         this.moveNumber = -1;
@@ -83,7 +82,6 @@ class Node {
     /** 未使用状態にします。 */
     clear() {
         this.edgeLength = 0;
-        this.totalValue = 0.0;
         this.totalCount = 0;
         this.hashValue = 0;
         this.moveNumber = -1;
@@ -105,7 +103,7 @@ class Node {
         this.position = position;
 
         for (const rv of argsort(prob, true)) {
-            if (candidates.includes(rv)) {
+            if (prob[rv] !== 0.0 &amp;&amp; candidates.includes(rv)) {
                 this.moves[this.edgeLength] = this.C.rv2ev(rv);
                 this.probabilities[this.edgeLength] = prob[rv];
                 this.values[this.edgeLength] = 0.0;
@@ -179,7 +177,7 @@ export class MCTS {
      * @param {Function} evaluatePlugin
      */
     constructor(nn, C, evaluatePlugin = null) {
-        this.C_PUCT = 0.01;
+        this.C_PUCT = 5.0; // AlphaGo Hui論文より。AlphaGo Zeroがこの値を使ったかは不明。
         this.mainTime = 0.0;
         this.byoyomi = 1.0;
         this.leftTime = 0.0;
@@ -345,28 +343,56 @@ export class MCTS {
     }
 
     /**
-     * printInfoのヘルパー関数です。
+     * 
      * @private
      * @param {Integer} nodeId 
-     * @param {*} headMove 
      * @param {BoardConstants} c 
      */
-    bestSequence(nodeId, headMove, c) {
-        let seqStr = (c.ev2str(headMove) + '   ').slice(0, 3);
-        let nextMove = headMove;
-
-        for (let i = 0; i &lt; 7; i++) {
+    edgeWinrate(nodeId, c) {
+        let value = NaN;
+        let parity = 1;
+        while (true) {
             const node = this.nodes[nodeId];
-            if (nextMove === c.PASS || node.edgeLength &lt; 1) {
+            if (node.edgeLength &lt; 1) {
                 break;
             }
 
-            const best = argmax(node.visitCounts.slice(0, node.edgeLength));
+            const [best] = node.getSortedIndices();
             if (node.visitCounts[best] === 0) {
                 break;
             }
-            nextMove = node.moves[best];
-            seqStr += '->' + (c.ev2str(nextMove) + '   ').slice(0, 3);
+            value = node.values[best] * parity;
+            if (!this.hasEdgeNode(best, nodeId, node.moveNumber + 1)) {
+                break;
+            }
+            nodeId = node.nodeIds[best];
+            parity *= -1;
+        }
+
+        return (value + 1.0) / 2.0;
+    }
+
+    /**
+     * printInfoのヘルパー関数です。
+     * @private
+     * @param {Uint16} headMove nodeIdのノードに至る着手です
+     * @param {Integer} nodeId 
+     * @param {BoardConstants} c 
+     */
+    bestSequence(nodeId, c) {
+        let seqStr = '';
+        for (let i = 0; i &lt; 7; i++) {
+            const node = this.nodes[nodeId];
+            if (node.edgeLength &lt; 1) {
+                break;
+            }
+
+            const [best] = node.getSortedIndices();
+            if (node.visitCounts[best] === 0) {
+                break;
+            }
+            const bestMove = node.moves[best];
+            seqStr += '->' + (c.ev2str(bestMove) + '   ').slice(0, 3);
 
             if (!this.hasEdgeNode(best, nodeId, node.moveNumber + 1)) {
                 break;
@@ -403,7 +429,7 @@ export class MCTS {
                 ('  ' + rate.toFixed(1)).slice(-5),
                 ('  ' + value.toFixed(1)).slice(-5),
                 ('  ' + (node.probabilities[m] * 100.0).toFixed(1)).slice(-5),
-                this.bestSequence(node.nodeIds[m], node.moves[m], c)
+                (c.ev2str(node.moves[m]) + '   ').slice(0, 3) + this.bestSequence(node.nodeIds[m], c)
             );
         }
     }
@@ -419,6 +445,7 @@ export class MCTS {
         if (this.evaluatePlugin) {
             prob = this.evaluatePlugin(b, prob);
         }
+        this.evalCount += 1;
         return [prob, value];
     }
 
@@ -430,7 +457,6 @@ export class MCTS {
      */
     async prepareRootNode(b) {
         this.rootMoveNumber = b.moveNumber;
-        this.C_PUCT = this.rootMoveNumber &lt; 8 ? 0.01 : 1.5;
         this.rootId = this.getNodeIdInNodes(b);
         if (this.rootId == null) {
             const [prob] = await this.evaluate(b);
@@ -450,7 +476,6 @@ export class MCTS {
      */
     async evaluateEdge(b, edgeIndex, parentNode) {
         let [prob, value] = await this.evaluate(b);
-        this.evalCount += 1;
         value = -value[0]; // parentNodeの手番から見たバリューに変換します。
         parentNode.values[edgeIndex] = value;
         parentNode.evaluated[edgeIndex] = true;
@@ -458,6 +483,8 @@ export class MCTS {
             this.cleanupNodes();
         }
         const nodeId = this.createNode(b, prob);
+        parentNode.nodeIds[edgeIndex] = nodeId;
+        parentNode.hashes[edgeIndex] = b.hash();
         /*
         if (!this.isConsistentNode(nodeId, b)) {
             const node = this.nodes[nodeId];
@@ -468,10 +495,6 @@ export class MCTS {
             throw new Error('inconsistent node');
         }
         */
-        parentNode.nodeIds[edgeIndex] = nodeId;
-        parentNode.hashes[edgeIndex] = b.hash();
-        parentNode.totalValue -= parentNode.totalActionValues[edgeIndex];
-        parentNode.totalCount += parentNode.visitCounts[edgeIndex];
         return value;
     }
 
@@ -501,12 +524,16 @@ export class MCTS {
             b.moveNumber > b.C.BVCNT * 2 ||
             (selectedMove === b.C.PASS &amp;&amp; b.prevMove === b.C.PASS);
         */
-        const value = isHeadNode ?
-            (node.evaluated[selectedIndex] ?
-                node.values[selectedIndex] :
-                await this.evaluateEdge(b, selectedIndex, node)) :
-            - await this.playout(b, selectedId); // selectedIdの手番でのバリューが返されるから符号を反転させます。
-        node.totalValue += value;
+        let value;
+        if (isHeadNode) {
+            if (node.evaluated[selectedIndex]) {
+                value = node.values[selectedIndex];
+            } else {
+                value = await this.evaluateEdge(b, selectedIndex, node);
+            }
+        } else {
+            value = - await this.playout(b, selectedId); // selectedIdの手番でのバリューが返されるから符号を反転させます。
+        }
         node.totalCount += 1;
         node.totalActionValues[selectedIndex] += value;
         node.incrementVisitCount(selectedIndex);
@@ -537,6 +564,7 @@ export class MCTS {
      */
     async search(b, time, ponder) {
         const start = Date.now();
+        this.evalCount = 0;
         const rootNode = await this.prepareRootNode(b);
 
         if (rootNode.edgeLength &lt;= 1) { // 候補手がパスしかなければ
@@ -553,7 +581,6 @@ export class MCTS {
             () => this.terminateFlag || Date.now() - start > time_;
 
         let [best, second] = rootNode.getSortedIndices();
-        this.evalCount = 0;
         if (ponder || this.shouldSearch(best, second)) {
             await this.keepPlayout(b);
             [best, second] = rootNode.getSortedIndices();
@@ -614,7 +641,7 @@ export class MCTS {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Sep 08 2018 01:49:54 GMT+0900 (日本標準時)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sun Sep 09 2018 23:15:10 GMT+0900 (日本標準時)
 </footer>
 
 <script> prettyPrint(); </script>
