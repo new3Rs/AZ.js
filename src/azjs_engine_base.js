@@ -139,6 +139,7 @@ export class AZjsEngineBase {
             default: {
                 const [best] = node.getSortedIndices();
                 return [node.moves[best], node.winrate(best)];
+                // return [node.moves[best], 1.0 - this.mcts.edgeWinrate(node.nodeIds[best])];
             }
         }
     }

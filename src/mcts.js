@@ -315,28 +315,56 @@ export class MCTS {
     }
 
     /**
-     * printInfoのヘルパー関数です。
+     * 
      * @private
      * @param {Integer} nodeId 
-     * @param {*} headMove 
      * @param {BoardConstants} c 
      */
-    bestSequence(nodeId, headMove, c) {
-        let seqStr = (c.ev2str(headMove) + '   ').slice(0, 3);
-        let nextMove = headMove;
-
-        for (let i = 0; i < 7; i++) {
+    edgeWinrate(nodeId, c) {
+        let value = NaN;
+        let parity = 1;
+        while (true) {
             const node = this.nodes[nodeId];
-            if (nextMove === c.PASS || node.edgeLength < 1) {
+            if (node.edgeLength < 1) {
                 break;
             }
 
-            const best = argmax(node.visitCounts.slice(0, node.edgeLength));
+            const [best] = node.getSortedIndices();
             if (node.visitCounts[best] === 0) {
                 break;
             }
-            nextMove = node.moves[best];
-            seqStr += '->' + (c.ev2str(nextMove) + '   ').slice(0, 3);
+            value = node.values[best] * parity;
+            if (!this.hasEdgeNode(best, nodeId, node.moveNumber + 1)) {
+                break;
+            }
+            nodeId = node.nodeIds[best];
+            parity *= -1;
+        }
+
+        return (value + 1.0) / 2.0;
+    }
+
+    /**
+     * printInfoのヘルパー関数です。
+     * @private
+     * @param {Uint16} headMove nodeIdのノードに至る着手です
+     * @param {Integer} nodeId 
+     * @param {BoardConstants} c 
+     */
+    bestSequence(nodeId, c) {
+        let seqStr = '';
+        for (let i = 0; i < 7; i++) {
+            const node = this.nodes[nodeId];
+            if (node.edgeLength < 1) {
+                break;
+            }
+
+            const [best] = node.getSortedIndices();
+            if (node.visitCounts[best] === 0) {
+                break;
+            }
+            const bestMove = node.moves[best];
+            seqStr += '->' + (c.ev2str(bestMove) + '   ').slice(0, 3);
 
             if (!this.hasEdgeNode(best, nodeId, node.moveNumber + 1)) {
                 break;
@@ -373,7 +401,7 @@ export class MCTS {
                 ('  ' + rate.toFixed(1)).slice(-5),
                 ('  ' + value.toFixed(1)).slice(-5),
                 ('  ' + (node.probabilities[m] * 100.0).toFixed(1)).slice(-5),
-                this.bestSequence(node.nodeIds[m], node.moves[m], c)
+                (c.ev2str(node.moves[m]) + '   ').slice(0, 3) + this.bestSequence(node.nodeIds[m], c)
             );
         }
     }
