@@ -75,7 +75,7 @@ class Node {
         this.position = position;
 
         for (const rv of argsort(prob, true)) {
-            if (candidates.includes(rv)) {
+            if (prob[rv] !== 0.0 && candidates.includes(rv)) {
                 this.moves[this.edgeLength] = this.C.rv2ev(rv);
                 this.probabilities[this.edgeLength] = prob[rv];
                 this.values[this.edgeLength] = 0.0;
