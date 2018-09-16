@@ -275,10 +275,7 @@ export class MCTS {
         const node = this.nodes[this.rootId];
         const winrate = node.winrate(best);
 
-        // 訪問回数が足りていないか、際立った手がなくかつはっきり勝ちじゃないとき
-        return node.totalCount <= 5000 ||
-            (node.visitCounts[best] <= node.visitCounts[second] * 100 &&
-            winrate <= 0.95)
+        return winrate <= 0.5 || node.probabilities[best] <= 0.99;
     }
 
     /**

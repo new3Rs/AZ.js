@@ -459,23 +459,24 @@
       const indices = array.map((e, i) => i);
       if (second == null) {
           if (reverse) {
-              return indices.sort((a, b) => array[b] - array[a]);
+              indices.sort((a, b) => array[b] - array[a]);
           } else {
-              return indices.sort((a, b) => array[a] - array[b]);
+              indices.sort((a, b) => array[a] - array[b]);
           }
       } else {
           if (reverse) {
-              return indices.sort((a, b) => {
+              indices.sort((a, b) => {
                   const cmp = array[b] - array[a];
                   return cmp !== 0 ? cmp : second[b] - second[a];
               });
           } else {
-              return indices.sort((a, b) => {
+              indices.sort((a, b) => {
                   const cmp = array[a] - array[b];
                   return cmp !== 0 ? cmp : second[a] - second[b];
               });
           }
       }
+      return indices
   }
 
   /**
@@ -1642,10 +1643,7 @@
           const node = this.nodes[this.rootId];
           const winrate = node.winrate(best);
 
-          // 訪問回数が足りていないか、際立った手がなくかつはっきり勝ちじゃないとき
-          return node.totalCount <= 5000 ||
-              (node.visitCounts[best] <= node.visitCounts[second] * 100 &&
-              winrate <= 0.95)
+          return winrate <= 0.5 || node.probabilities[best] <= 0.99;
       }
 
       /**

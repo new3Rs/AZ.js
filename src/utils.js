@@ -52,23 +52,24 @@ export function argsort(array, reverse, second = null) {
     const indices = array.map((e, i) => i);
     if (second == null) {
         if (reverse) {
-            return indices.sort((a, b) => array[b] - array[a]);
+            indices.sort((a, b) => array[b] - array[a]);
         } else {
-            return indices.sort((a, b) => array[a] - array[b]);
+            indices.sort((a, b) => array[a] - array[b]);
         }
     } else {
         if (reverse) {
-            return indices.sort((a, b) => {
+            indices.sort((a, b) => {
                 const cmp = array[b] - array[a];
                 return cmp !== 0 ? cmp : second[b] - second[a];
             });
         } else {
-            return indices.sort((a, b) => {
+            indices.sort((a, b) => {
                 const cmp = array[a] - array[b];
                 return cmp !== 0 ? cmp : second[a] - second[b];
             });
         }
     }
+    return indices
 }
 
 /**
