@@ -215,7 +215,12 @@ export class PlayController {
     }
 
     async enginePlay() {
-        const [move, winRate] = await this.engine.genmove(this.mode);
+        const start = Date.now();
+        const [move, winRate, num] = await this.engine.genmove(this.mode);
+        $('#playouts').text(num);
+        if (num !== 0) {
+            $('#nps').text((num * 1000 / (Date.now() - start)).toFixed(1));
+        }
         this.updateWinrateBar(this.isSelfPlay && this.controller.turn === JGO.BLACK ? 1.0 - winRate : winRate);
 
         if (!this.timer) {

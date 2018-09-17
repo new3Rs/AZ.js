@@ -529,7 +529,7 @@ export class MCTS {
      * @param {number} time 探索時間を秒単位で指定します
      * @param {bool} ponder ttrueのときstopメソッドが呼ばれるまで探索を継続します
      * @param {bool} clean 形勢が変わらない限りパス以外の着手を選びます
-     * @returns {Node} ルートノード
+     * @returns {Object[]} [Node, Integer] ルートノードと評価数
      */
     async search(b, time, ponder) {
         const start = Date.now();
@@ -539,7 +539,7 @@ export class MCTS {
         if (rootNode.edgeLength <= 1) { // 候補手がパスしかなければ
             console.log('\nmove number=%d:', this.rootMoveNumber + 1);
             this.printInfo(this.rootId, b.C);
-            return rootNode;
+            return [rootNode, this.evalCount];
         }
 
         this.cleanupNodes();
@@ -564,7 +564,7 @@ export class MCTS {
         );
         this.printInfo(this.rootId, b.C);
         this.leftTime = this.leftTime - (Date.now() - start) / 1000;
-        return rootNode;
+        return [rootNode, this.evalCount];
     }
 
     /**

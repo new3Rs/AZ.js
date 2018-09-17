@@ -1907,7 +1907,7 @@
           if (rootNode.edgeLength <= 1) { // 候補手がパスしかなければ
               console.log('\nmove number=%d:', this.rootMoveNumber + 1);
               this.printInfo(this.rootId, b.C);
-              return rootNode;
+              return [rootNode, this.evalCount];
           }
 
           this.cleanupNodes();
@@ -1932,7 +1932,7 @@
           );
           this.printInfo(this.rootId, b.C);
           this.leftTime = this.leftTime - (Date.now() - start) / 1000;
-          return rootNode;
+          return [rootNode, this.evalCount];
       }
 
       /**
@@ -2057,13 +2057,13 @@
        * @returns {Object[]} [(Integer[]|string), Number]
        */
       async genmove(mode) {
-          const [move, winRate] = await this.search(mode);
+          const [move, winRate, num] = await this.search(mode);
           if (winRate < 0.01) {
-              return ['resign', winRate];
+              return ['resign', winRate, num];
           }
           try {
               this.b.play(move);
-              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate];
+              return [move === this.b.C.PASS ? 'pass' : this.b.C.ev2xy(move), winRate, num];
           } catch (e) {
               this.b.showboard();
               console.log(this.b.candidates());
@@ -2098,7 +2098,7 @@
        * @returns {Object[]} [Integer, Number]
        */
       async search(mode, ponder = false) {
-          const node = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
+          const [node, num] = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);
           switch (mode) {
               case SearchMode.NORMAL: {
                   const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
@@ -2106,7 +2106,7 @@
                   winrates.sort((a, b) => b[1] - a[1]);
                   const i = winrates.findIndex(e => e[1] < 0.5);
                   const e = winrates[i < 0 ? winrates.length - 1 : Math.max(i - 1, 0)];
-                  return [node.moves[e[0]], e[1]];
+                  return [node.moves[e[0]], e[1], num];
               }
               case SearchMode.EASY: {
                   const indices = node.getSortedIndices().filter(e => node.visitCounts[e] > 0);
@@ -2116,11 +2116,11 @@
                   if (e == null) {
                       e = winrates[winrates.length - 1];
                   }
-                  return [node.moves[e[0]], e[1]];
+                  return [node.moves[e[0]], e[1], num];
               }
               default: {
                   const [best] = node.getSortedIndices();
-                  return [node.moves[best], node.winrate(best)];
+                  return [node.moves[best], node.winrate(best), num];
                   // return [node.moves[best], 1.0 - this.mcts.edgeWinrate(node.nodeIds[best])];
               }
           }
