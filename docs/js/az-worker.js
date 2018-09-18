@@ -1629,6 +1629,7 @@
               if (mn >= 0 && mn < this.rootMoveNumber) {
                   this.nodeHashes.delete(this.nodes[i].hashValue);
                   this.nodes[i].clear();
+                  this.nodesLength -= 1;
               }
           }
       }
@@ -1897,7 +1898,7 @@
        * @param {number} time 探索時間を秒単位で指定します
        * @param {bool} ponder ttrueのときstopメソッドが呼ばれるまで探索を継続します
        * @param {bool} clean 形勢が変わらない限りパス以外の着手を選びます
-       * @returns {Node} ルートノード
+       * @returns {Object[]} [Node, Integer] ルートノードと評価数
        */
       async search(b, time, ponder) {
           const start = Date.now();
@@ -2095,7 +2096,7 @@
        * @private
        * @param {SearchMode} mode
        * @param {bool} ponder
-       * @returns {Object[]} [Integer, Number]
+       * @returns {Object[]} [Integer, Number, Integer], 着手と勝率、評価数
        */
       async search(mode, ponder = false) {
           const [node, num] = await this.mcts.search(this.b, ponder ? Infinity : 0.0, ponder);

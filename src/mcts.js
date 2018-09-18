@@ -261,6 +261,7 @@ export class MCTS {
             if (mn >= 0 && mn < this.rootMoveNumber) {
                 this.nodeHashes.delete(this.nodes[i].hashValue);
                 this.nodes[i].clear();
+                this.nodesLength -= 1;
             }
         }
     }
