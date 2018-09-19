@@ -1319,8 +1319,10 @@ class PlayController {
         } else {
             this.isFirstMove = false;
         }
-        this.coord = coord; // ポンダーと一致するか確認するために直前の座標を保存。
-        await this.updateEngine(coord);
+        if (!this.isSelfPlay && this.controller.turn !== this.controller.ownColor) {
+            this.coord = coord; // ポンダーと一致するか確認するために直前の座標を保存。
+            await this.updateEngine(coord);
+        }
         if (this.isSelfPlay || this.controller.turn !== this.controller.ownColor) {
             setTimeout(async () => {
                 try {

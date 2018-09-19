@@ -278,6 +278,8 @@ class BaseBoard {
      */
     play(v, notFillEye = false) {
         if (!this.legal(v)) {
+            this.showboard();
+            console.log(v, this.C.ev2str(v));
             throw new Error('illegal move');
         }
         if (notFillEye && this.eyeshape(v, this.turn)) {

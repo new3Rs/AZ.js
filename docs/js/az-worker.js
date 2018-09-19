@@ -1118,6 +1118,8 @@
        */
       play(v, notFillEye = false) {
           if (!this.legal(v)) {
+              this.showboard();
+              console.log(v, this.C.ev2str(v));
               throw new Error('illegal move');
           }
           if (notFillEye && this.eyeshape(v, this.turn)) {
@@ -1595,7 +1597,7 @@
           return null;
       }
       /**
-       * 局面bのMCTSの探索ノードが既にあるか確認し、なければ生成してノードIDを返します。
+       * 局面bのMCTSの探索ノードを生成してノードIDを返します。
        * @param {Board} b 
        * @param {Float32Array} prob 
        * @returns {Integer} ノードID
