@@ -1383,6 +1383,7 @@
    */
 
   const NODES_MAX_LENGTH = 16384;
+  const COLLISION_DETECT = false;
 
   /** MCTSのノードクラスです。 */
   class Node {
@@ -1410,7 +1411,8 @@
           /** moves要素に対応するハッシュです。 */
           this.hashes = new Int32Array(this.C.BVCNT + 1);
           /** moves要素に対応する局面のニューラルネットワークを計算したか否かを保持します。 */
-          this.evaluated = new Uint8Array(this.C.BVCNT + 1); 
+          this.evaluated = new Uint8Array(this.C.BVCNT + 1);
+          this.value = 0;
           this.totalCount = 0;
           this.hashValue = 0;
           this.moveNumber = -1;
@@ -1422,6 +1424,7 @@
       /** 未使用状態にします。 */
       clear() {
           this.edgeLength = 0;
+          this.value = 0;
           this.totalCount = 0;
           this.hashValue = 0;
           this.moveNumber = -1;
@@ -1436,10 +1439,11 @@
        * @param {UInt16[]} candidates Boardが生成する候補手情報です。
        * @param {Float32Array} prob 着手確率(ニューラルネットワークのポリシー出力)です。
        */
-      initialize(hash, moveNumber, candidates, prob, position = null) {
+      initialize(hash, moveNumber, candidates, prob, value, position = null) {
           this.clear();
           this.hashValue = hash;
           this.moveNumber = moveNumber;
+          this.value = value;
           this.position = position;
 
           for (const rv of argsort(prob, true)) {
@@ -1583,13 +1587,8 @@
           if (this.nodeHashes.has(hash)) {
               const id = this.nodeHashes.get(hash);
               if (b.moveNumber === this.nodes[id].moveNumber) {
-                  if (b.toString() === this.nodes[id].position) {
+                  {
                       return id;
-                  } else {
-                      this.collisions += 1;
-                      console.log('hash collision');
-                      b.showboard(false);
-                      console.log(this.nodes[id].position);
                   }
               }
           }
@@ -1601,8 +1600,7 @@
        * @param {Float32Array} prob 
        * @returns {Integer} ノードID
        */
-      createNode(b, prob) {
-          const candidates = b.candidates();
+      createNode(b, prob, value) {
           const hash = b.hash();
           let nodeId = Math.abs(hash) % NODES_MAX_LENGTH;
           while (this.nodes[nodeId].moveNumber !== -1) {
@@ -1613,7 +1611,7 @@
           this.nodesLength += 1;
 
           const node = this.nodes[nodeId];
-          node.initialize(hash, b.moveNumber, candidates, prob, b.toString());
+          node.initialize(hash, b.moveNumber, b.candidates(), prob, value, COLLISION_DETECT && b.toString());
           return nodeId;
       }
 
@@ -1797,8 +1795,8 @@
           this.rootMoveNumber = b.moveNumber;
           this.rootId = this.getNodeIdInNodes(b);
           if (this.rootId == null) {
-              const [prob] = await this.evaluate(b);
-              this.rootId = this.createNode(b, prob);
+              const [prob, value] = await this.evaluate(b);
+              this.rootId = this.createNode(b, prob, value);
           }
           // AlphaGo Zeroでは自己対戦時にはここでprobに"Dirichletノイズ"を追加します。
           return this.nodes[this.rootId];
@@ -1815,14 +1813,14 @@
       async evaluateEdge(b, edgeIndex, parentNode) {
           let [prob, value] = await this.evaluate(b);
           value = -value[0]; // parentNodeの手番から見たバリューに変換します。
-          parentNode.values[edgeIndex] = value;
-          parentNode.evaluated[edgeIndex] = true;
           if (this.nodesLength > 0.85 * NODES_MAX_LENGTH) {
               this.cleanupNodes();
           }
-          const nodeId = this.createNode(b, prob);
+          const nodeId = this.createNode(b, prob, value);
           parentNode.nodeIds[edgeIndex] = nodeId;
           parentNode.hashes[edgeIndex] = b.hash();
+          parentNode.values[edgeIndex] = value;
+          parentNode.evaluated[edgeIndex] = true;
           /*
           if (!this.isConsistentNode(nodeId, b)) {
               const node = this.nodes[nodeId];
@@ -1854,25 +1852,24 @@
               console.log('%s %d', b.C.ev2str(selectedMove), this.collisions);
               b.play(b.C.PASS);
           }
-          const isHeadNode = !this.hasEdgeNode(selectedIndex, nodeId, b.moveNumber);
-          /*
-          // 以下はPyaqが採用したヘッドノードの条件です。
-          const isHeadNode = !this.hasEdgeNode(selectedIndex, nodeId, b.moveNumber) ||
-              node.visitCounts[selectedIndex] < EXPAND_CNT ||
-              b.moveNumber > b.C.BVCNT * 2 ||
-              (selectedMove === b.C.PASS && b.prevMove === b.C.PASS);
-          */
           let value;
-          if (isHeadNode) {
-              if (node.evaluated[selectedIndex]) {
-                  value = node.values[selectedIndex];
+          if (selectedId >= 0) {
+              value = - await this.playout(b, selectedId); // selectedIdの手番でのバリューが返されるから符号を反転させます。
+          } else {
+              const nodeId = this.nodeHashes.get(b.hash());
+              if (nodeId && this.nodes[nodeId].moveNumber === b.moveNumber) {
+                  const edgeNode = this.nodes[nodeId];
+                  node.nodeIds[selectedIndex] = nodeId;
+                  node.hashes[selectedIndex] = b.hash();
+                  node.values[selectedIndex] = -edgeNode.value;
+                  node.evaluated[selectedIndex] = true;
+                  value = - await this.playout(b, nodeId);
               } else {
                   value = await this.evaluateEdge(b, selectedIndex, node);
               }
-          } else {
-              value = - await this.playout(b, selectedId); // selectedIdの手番でのバリューが返されるから符号を反転させます。
           }
           node.totalCount += 1;
+          node.totalActionValue += value;
           node.totalActionValues[selectedIndex] += value;
           node.incrementVisitCount(selectedIndex);
           return value;
