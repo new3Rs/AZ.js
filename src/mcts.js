@@ -231,7 +231,7 @@ export class MCTS {
         return null;
     }
     /**
-     * 局面bのMCTSの探索ノードが既にあるか確認し、なければ生成してノードIDを返します。
+     * 局面bのMCTSの探索ノードを生成してノードIDを返します。
      * @param {Board} b 
      * @param {Float32Array} prob 
      * @returns {Integer} ノードID
