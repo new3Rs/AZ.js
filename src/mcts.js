@@ -130,7 +130,9 @@ class Node {
         const cpsv = c_puct * Math.sqrt(this.totalCount);
         const meanActionValues = new Float32Array(this.edgeLength);
         for (let i = 0; i < meanActionValues.length; i++) {
-            meanActionValues[i] = this.visitCounts[i] === 0 ? 0 : this.totalActionValues[i] / this.visitCounts[i];
+            /* AlphaGo Zero論文ではmeanActionValueの初期値は0ですが、その場合、悪い局面でMCTSがエッジをすべて一度は評価しようとします。
+             * それを避けるために初期値を現局面の評価値にしました。 */
+            meanActionValues[i] = this.visitCounts[i] === 0 ? this.value : this.totalActionValues[i] / this.visitCounts[i];
         }
         const ucb = new Float32Array(this.edgeLength);
         for (let i = 0; i < ucb.length; i++) {
