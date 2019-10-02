@@ -1461,7 +1461,7 @@ async function startGame(size, engine) {
     if (condition.color === 'W') {
         controller.setOwnColor(JGO.WHITE);
         if (controller.jboard.width === 9) {
-            controller.setKomi(5.5);
+            controller.setKomi(6.5);
         }
     } else if (condition.color === 'B') {
         controller.setOwnColor(JGO.BLACK);
